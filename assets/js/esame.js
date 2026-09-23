@@ -12,8 +12,7 @@ page(async () => {
     </table>`;
 
   app.innerHTML = `
-    <h1>Esame</h1>
-    <p class="page-intro">Struttura della prova d'esame di Fisica Generale II (a.a. ${esc(corso.annoAccademico)}).</p>
+    ${pageHead(`a.a. ${esc(corso.annoAccademico)}`, "Come funziona l'esame", `Uno scritto e un orale, entrambi in trentesimi: il voto finale è la media dei due. Quando ti senti pronto, <a href="simulazione.html">simula una prova</a>.`)}
 
     <div class="exam-hero">
       <section class="card accent exam-card">
@@ -37,23 +36,7 @@ page(async () => {
       <h2>Voto finale</h2>
       <p style="font-size:1.05rem">${esc(esame.votoFinale)}</p>
       <div class="formula" style="max-width:420px">${tex(String.raw`V_{\text{finale}} = \frac{V_{\text{scritto}} + V_{\text{orale}}}{2}`)}</div>
-      <h3>Simulatore</h3>
-      <form class="no-print" id="calc" novalidate>
-        <fieldset class="calc-group">
-          <legend>Esercizi (0–6 punti ciascuno)</legend>
-          <div class="calc">${[1, 2, 3, 4].map((i) => `<input type="number" class="sc-ex" name="esercizio${i}" min="0" max="6" step="0.5" inputmode="decimal" autocomplete="off" aria-label="Punteggio esercizio ${i}" placeholder="E${i}…">`).join("")}</div>
-        </fieldset>
-        <fieldset class="calc-group">
-          <legend>Domande di teoria (0–3 punti ciascuna)</legend>
-          <div class="calc">${[1, 2].map((i) => `<input type="number" class="sc-th" name="teoria${i}" min="0" max="3" step="0.5" inputmode="decimal" autocomplete="off" aria-label="Punteggio domanda di teoria ${i}" placeholder="T${i}…">`).join("")}</div>
-        </fieldset>
-        <fieldset class="calc-group">
-          <legend>Orale (0–30)</legend>
-          <div class="calc"><input type="number" id="orale" name="orale" min="0" max="30" step="1" inputmode="numeric" autocomplete="off" aria-label="Voto dell'orale" placeholder="es. 27…"></div>
-        </fieldset>
-        <p class="field-error" id="calc-err" role="alert" hidden></p>
-      </form>
-      <p id="calc-out" class="small" style="margin-top:10px" role="status" aria-live="polite"></p>
+      <a class="btn primary" href="simulazione.html">${icon("timer")} Simula uno scritto o un orale</a>
     </div>
 
     <div class="card" style="margin-top:14px">
@@ -66,10 +49,9 @@ page(async () => {
     <div class="grid grid-2" style="margin-top:14px">
       <section class="card" id="risultati">
         <h2>Risultati di apprendimento attesi</h2>
-        <p class="small muted">Checklist di autovalutazione: spunta un livello quando ti senti pronto.</p>
-        ${ra.livelli.some((l) => l.placeholder) ? `<div class="notice small">${esc(ra.nota)}</div>` : ""}
+        <p class="small muted">Sei livelli, dalla conoscenza di base al problem solving su induzione e onde. Spunta quelli che senti di aver raggiunto.</p>
         <ul class="topic-list" id="ra-list">
-          ${ra.livelli.map((l) => `<li>${checkbox("outcome", l.id, `<strong>Livello ${l.livello}.</strong> ${l.placeholder ? `<span class="placeholder-text">${esc(l.testo)}</span>` : esc(l.testo)}`)}</li>`).join("")}
+          ${ra.livelli.map((l) => `<li>${checkbox("outcome", l.id, `<strong>Livello ${l.livello}.</strong> ${l.placeholder && l.testo.startsWith("[") ? `<span class="soft-text">descrizione completa nella <a href="${esc(corso.link.paginaRoma)}" target="_blank" rel="noopener">scheda ufficiale del corso${EXT}</a></span>` : esc(l.testo)}`)}</li>`).join("")}
         </ul>
       </section>
       <section class="card" id="criteri">
@@ -84,33 +66,4 @@ page(async () => {
   bindChecks($("#ra-list"));
   bindChecks($("#cr-list"));
 
-  const fmt = (v) => NUM.format(v);
-  function calc() {
-    const errors = [];
-    const val = (el) => {
-      el.removeAttribute("aria-invalid");
-      if (el.value === "" && !el.validity.badInput) return null;
-      const v = Number(el.value);
-      if (el.validity.badInput || Number.isNaN(v) || v < Number(el.min) || v > Number(el.max)) {
-        el.setAttribute("aria-invalid", "true");
-        errors.push(`${el.getAttribute("aria-label")}: inserisci un numero tra ${el.min} e ${el.max}.`);
-        return null;
-      }
-      return v;
-    };
-    const ex = $all(".sc-ex").map(val), th = $all(".sc-th").map(val), or = val($("#orale"));
-    const errBox = $("#calc-err");
-    errBox.hidden = !errors.length;
-    errBox.textContent = errors.join(" ");
-    const parts = [...ex, ...th];
-    const out = $("#calc-out");
-    if (parts.every((v) => v === null) && or === null) { out.textContent = errors.length ? "" : "Inserisci i punteggi per stimare il voto."; return; }
-    const scritto = parts.reduce((a, v) => a + (v || 0), 0);
-    let msg = `Scritto: <strong>${fmt(scritto)}/30</strong> — ${scritto >= s.soglia ? "superato" : `sotto la soglia di ${s.soglia}`}.`;
-    if (or !== null && scritto >= s.soglia) msg += ` Voto finale stimato: <strong>${fmt((scritto + or) / 2)}/30</strong>.`;
-    out.innerHTML = msg + ` <span class="muted">(stima: arrotondamenti e lode li decidono i docenti)</span>`;
-  }
-  $("#calc").addEventListener("input", calc);
-  $("#calc").addEventListener("submit", (e) => e.preventDefault());
-  calc();
 });

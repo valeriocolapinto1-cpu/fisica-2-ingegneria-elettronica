@@ -10,13 +10,34 @@
 const NAV = [
   { href: "index.html", label: "Home" },
   { href: "programma.html", label: "Programma" },
-  { href: "calendario.html", label: "Percorso" },
   { href: "formulario.html", label: "Formulario" },
   { href: "esercizi.html", label: "Esercizi" },
+  { href: "simulazione.html", label: "Simula esame" },
   { href: "laboratorio.html", label: "Laboratorio" },
   { href: "esame.html", label: "Esame" },
   { href: "risorse.html", label: "Risorse" },
 ];
+
+/* icone SVG in linea (decorative) */
+const ICONS = {
+  book: '<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2V5z"/><path d="M4 19a2 2 0 0 1 2-2h13"/>',
+  sigma: '<path d="M18 4H6l6 8-6 8h12"/>',
+  pencil: '<path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M14 6l4 4"/>',
+  timer: '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6"/>',
+  flask: '<path d="M9 3h6M10 3v6L4.5 18.5A2 2 0 0 0 6.2 21h11.6a2 2 0 0 0 1.7-2.5L14 9V3"/><path d="M7 15h10"/>',
+  target: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1"/>',
+  link: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
+  search: '<circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/>',
+  chev: '<path d="M9 6l6 6-6 6"/>',
+  info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>',
+};
+function icon(name, cls = "") {
+  return `<svg class="${cls}" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${ICONS[name] || ""}</svg>`;
+}
+/* intestazione di pagina coerente */
+function pageHead(eyebrow, title, intro) {
+  return `<header class="page-head">${eyebrow ? `<span class="eyebrow">${eyebrow}</span>` : ""}<h1>${title}</h1>${intro ? `<p class="page-intro">${intro}</p>` : ""}</header>`;
+}
 
 const TIPI_LEZIONE = {
   teoria: "Teoria",
@@ -41,7 +62,7 @@ function progressBar(p, color) {
 }
 /* testo normalizzato per la ricerca: minuscolo, senza accenti */
 function norm(s) {
-  return String(s ?? "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+  return String(s ?? "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 function safeGet(key) { try { return localStorage.getItem(key); } catch (e) { return null; } }
 function safeSet(key, val) { try { if (val === null) localStorage.removeItem(key); else localStorage.setItem(key, val); } catch (e) { /* storage non disponibile */ } }
@@ -80,7 +101,7 @@ function updateThemeButton() {
   }
   // la barra del browser segue il tema scelto a mano
   if (document.documentElement.dataset.theme) {
-    $all('meta[name="theme-color"]').forEach((m) => m.setAttribute("content", dark ? "#161d27" : "#ffffff"));
+    $all('meta[name="theme-color"]').forEach((m) => m.setAttribute("content", dark ? "#0a0a0a" : "#fafafa"));
   }
 }
 
@@ -91,7 +112,7 @@ function renderChrome() {
   header.className = "site-header";
   header.innerHTML = `
     <div class="header-inner">
-      <a class="brand" href="index.html" translate="no">Fisica <span>II</span></a>
+      <a class="brand" href="index.html" translate="no"><svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#0062d1"/><path d="M14 18h36L32 50z" fill="none" stroke="#fff" stroke-width="5" stroke-linejoin="round"/></svg>Fisica II <span>Roma</span></a>
       <nav class="nav" id="nav" aria-label="Navigazione principale">
         ${NAV.map((n) => `<a href="${n.href}"${n.href === page ? ' aria-current="page"' : ""}>${n.label}</a>`).join("")}
       </nav>
@@ -99,8 +120,9 @@ function renderChrome() {
         <input type="search" name="q" placeholder="Cerca argomento…" aria-label="Cerca nel sito" autocomplete="off" enterkeyhint="search">
       </form>
       <div class="header-tools">
+        <a class="icon-btn search-btn" href="cerca.html" aria-label="Cerca nel sito">${icon("search")}</a>
         <button class="icon-btn" id="theme-btn" type="button"></button>
-        <button class="icon-btn menu-btn" id="menu-btn" type="button" aria-label="Apri il menu" aria-expanded="false" aria-controls="nav"><span aria-hidden="true">☰</span></button>
+        <button class="icon-btn menu-btn" id="menu-btn" type="button" aria-label="Apri il menu" aria-expanded="false" aria-controls="nav"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
       </div>
     </div>`;
   document.body.prepend(header);
@@ -109,7 +131,8 @@ function renderChrome() {
   const footer = document.createElement("footer");
   footer.className = "site-footer";
   footer.innerHTML = `
-    <p>Fisica Generale II · Ingegneria Elettronica · Roma · a.a.&nbsp;2026/2027 — sito di studio personale, non ufficiale.</p>
+    <p>Fisica Generale II · Ingegneria Elettronica · Università di Roma · a.a.&nbsp;2026/2027</p>
+    <p>Sito di studio non ufficiale, gratuito e aperto a tutti gli studenti del corso. Per programma ed esami fanno fede le comunicazioni dei docenti.</p>
     <nav class="footer-links" aria-label="Link legali">
       <a href="privacy.html">Privacy</a>
       <a href="note-legali.html">Note legali</a>
@@ -187,15 +210,16 @@ function showConsentBanner(force = false) {
 
 /* ---------- CTA fissa su mobile: continua dalla prossima lezione ---------- */
 function renderStickyCta(lezioni) {
+  if (/simulazione\.html$/.test(location.pathname)) return; // la pagina ha già la sua barra dei punteggi
   const next = lezioni.lezioni.find((l) => !Store.get("lesson", String(l.n)));
   $("#sticky-cta")?.remove();
   const bar = document.createElement("div");
   bar.id = "sticky-cta";
   bar.className = "sticky-cta";
   bar.innerHTML = next
-    ? `<a class="btn primary" href="calendario.html#lez-${next.n}">Continua: Lezione&nbsp;${next.n}</a>
-       <a class="btn" href="cerca.html" aria-label="Cerca nel sito"><span aria-hidden="true">⌕</span> Cerca</a>`
-    : `<a class="btn primary" href="esame.html">Tutte le lezioni fatte: ripassa per l'esame</a>`;
+    ? `<a class="btn primary" href="programma.html#lez-${next.n}">Continua: Lezione&nbsp;${next.n}</a>
+       <a class="btn" href="simulazione.html">${icon("timer")} Simula</a>`
+    : `<a class="btn primary" href="simulazione.html">Simula l'esame</a>`;
   document.body.append(bar);
   document.body.classList.add("has-sticky-cta");
 }
@@ -223,7 +247,7 @@ function showLoadError(err) {
   main.insertAdjacentHTML("afterbegin", `<div class="notice" role="alert"><strong>Impossibile caricare i dati.</strong> ${esc(err.message)}<br>
     ${fileProto
       ? "Stai aprendo il sito come file locale e il browser blocca la lettura dei JSON. Avvia un server nella cartella del sito (<code>python3 -m http.server</code>) e apri <code>http://localhost:8000</code>, oppure usa la versione online."
-      : "Controlla la connessione e riprova. Se hai modificato un file in <code>data/</code>, verifica che sia un JSON valido (virgole e virgolette)."}
+      : "Controlla la connessione e riprova tra qualche istante."}
     <div style="margin-top:8px"><button class="btn" type="button" onclick="location.reload()">Riprova</button></div></div>`);
 }
 
@@ -328,6 +352,76 @@ function renderMathIn(el) {
   }
 }
 
+/* ---------- animazioni ---------- */
+const REDUCED = window.matchMedia("(prefers-reduced-motion: reduce)");
+let _io = null;
+// in stampa tutto deve essere visibile, anche ciò che non è ancora comparso
+window.addEventListener("beforeprint", () => $all(".reveal").forEach((el) => el.classList.add("in")));
+/* fa comparire con dissolvenza gli elementi quando entrano nello schermo */
+function reveal(root = document, selector = ".card, .lesson, details.block, .fblock, .exgroup > h2, .section-title, .page-head, .q-card") {
+  if (REDUCED.matches || !("IntersectionObserver" in window)) return;
+  _io = _io || new IntersectionObserver((entries) => {
+    for (const e of entries) if (e.isIntersecting) { e.target.classList.add("in"); _io.unobserve(e.target); }
+  }, { rootMargin: "0px 0px -6% 0px" });
+  let i = 0;
+  $all(selector, root).forEach((el) => {
+    if (el.classList.contains("reveal") || el.closest(".total-card")) return;
+    el.classList.add("reveal");
+    el.style.setProperty("--i", String(Math.min(i++, 8)));
+    _io.observe(el);
+  });
+}
+/* numeri che salgono da 0 al valore finale */
+function countUp(root = document) {
+  $all("[data-count]", root).forEach((el) => {
+    const end = Number(el.dataset.count), suffix = el.dataset.suffix || "";
+    if (REDUCED.matches || !end) { el.textContent = end + suffix; return; }
+    const t0 = performance.now(), dur = 900;
+    const step = (t) => {
+      const k = Math.min(1, (t - t0) / dur), v = Math.round(end * (1 - Math.pow(1 - k, 3)));
+      el.textContent = v + suffix;
+      if (k < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  });
+}
+/* controllo a schede (viste) con indicatore animato */
+function segmented(el, onChange) {
+  const btns = $all('[role="tab"]', el);
+  const ind = document.createElement("span");
+  ind.className = "seg-ind";
+  el.prepend(ind);
+  const place = () => {
+    const b = btns.find((x) => x.getAttribute("aria-selected") === "true") || btns[0];
+    ind.style.width = b.offsetWidth + "px";
+    ind.style.transform = `translateX(${b.offsetLeft - 3}px)`;
+  };
+  const select = (b, notify = true) => {
+    btns.forEach((x) => {
+      const on = x === b;
+      x.setAttribute("aria-selected", String(on));
+      x.tabIndex = on ? 0 : -1;
+      const panel = document.getElementById(x.getAttribute("aria-controls"));
+      if (panel) panel.hidden = !on;
+    });
+    place();
+    if (notify && onChange) onChange(b.dataset.value);
+  };
+  btns.forEach((b, i) => {
+    b.addEventListener("click", () => select(b));
+    b.addEventListener("keydown", (e) => {
+      const d = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+      if (!d) return;
+      const n = btns[(i + d + btns.length) % btns.length];
+      n.focus(); select(n);
+    });
+  });
+  requestAnimationFrame(place);
+  window.addEventListener("resize", place);
+  document.fonts && document.fonts.ready.then(place);
+  return { select: (value, notify = false) => { const b = btns.find((x) => x.dataset.value === value); if (b) select(b, notify); } };
+}
+
 /* porta in vista l'elemento indicato dall'hash dopo il rendering dinamico */
 function scrollToHash() {
   if (!location.hash) return;
@@ -336,7 +430,9 @@ function scrollToHash() {
   const det = t.closest("details");
   if (det) det.open = true;
   // elementi alti (intere sezioni) allineati in alto, elementi piccoli al centro
+  t.classList.add("in");
   t.scrollIntoView({ block: t.offsetHeight > window.innerHeight / 2 ? "start" : "center" });
+  t.classList.remove("flash"); void t.offsetWidth; t.classList.add("flash");
 }
 
 /* avvio comune: header/footer, stato di caricamento, poi la funzione della pagina */
@@ -354,6 +450,8 @@ function page(init) {
     try {
       await init();
       $("main").removeAttribute("aria-busy");
+      reveal($("main"));
+      countUp($("main"));
       scrollToHash();
     } catch (err) {
       console.error(err);

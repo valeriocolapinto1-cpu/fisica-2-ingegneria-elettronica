@@ -12,32 +12,29 @@ page(async () => {
 
   const card = (e) => {
     const s = sezioni[e.sezione];
-    return `<article class="card exercise" id="${e.id}" style="border-left:4px solid ${blockColor(blockOfSection(e.sezione))};margin:8px 0"
+    return `<article class="card exercise" id="${e.id}" style="margin:8px 0"
         data-block="${blockOfSection(e.sezione) || ""}" data-search="${esc(norm(`${e.titolo} ${e.testo || ""} L${e.lezione} ${s ? sectionLabel(s) : ""}`))}">
       <div class="lhead" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px">
-        <a class="chip" href="calendario.html#lez-${e.lezione}">Lezione ${e.lezione}</a>
+        <a class="chip" href="programma.html#lez-${e.lezione}">Lezione ${e.lezione}</a>
         ${s ? `<a class="chip bchip" style="--bc:${blockColor(s.blocco.id)}" href="programma.html#${s.id}">${esc(sectionLabel(s))}</a>` : ""}
-        ${e.testo ? "" : `<span class="badge placeholder">testo da completare</span>`}
+        ${e.testo ? "" : `<span class="badge">testo in arrivo</span>`}
       </div>
       ${checkbox("exercise", e.id, `<strong>${esc(e.titolo)}</strong>`)}
       <div class="ex-body" style="margin-top:6px">
         ${e.testo
           ? `<div>${esc(e.testo)}</div>`
-          : `<p class="placeholder-text small" style="margin:0">Testo non disponibile: ricopialo dagli appunti della lezione ${e.lezione} o da un appello sul Dropbox, poi inseriscilo nel campo <code>testo</code> di <code>${e.id}</code> in <code>data/esercizi.json</code>.</p>`}
+          : `<p class="soft-text small" style="margin:0">Il testo completo arriverà presto. Intanto ripassa la lezione ${e.lezione} e cerca un esercizio simile negli appelli passati.</p>`}
         ${e.soluzione ? `<details class="official"><summary>Soluzione</summary><div>${esc(e.soluzione)}</div></details>` : ""}
       </div>
     </article>`;
   };
 
   app.innerHTML = `
-    <h1>Esercizi</h1>
-    <p class="page-intro">Le tipologie di esercizio svolte a lezione, ricavate dal calendario e organizzate per blocco. Sono <strong>tracce</strong>:
-      il testo completo non è riportato per non inventare dati. Completa i testi dagli appunti e allenati sugli
-      <a href="${esc(corso.link.dropboxEsami)}" target="_blank" rel="noopener">esercizi d'esame degli appelli precedenti${EXT}</a>.</p>
-    <div class="notice info">Allo scritto ci sono <strong>4 esercizi da 6 punti</strong> in 2 ore e 30 minuti, senza materiale: allenati a risolverli a tempo (circa 30 minuti l'uno) e senza formulario.</div>
-    <div class="card" style="margin:12px 0">
+    ${pageHead("Esercizi", "Esercizi per argomento", `Le tipologie di esercizio svolte a lezione, divise per blocco. Segna quelle che sai risolvere e allenati sui testi veri degli <a href="${esc(corso.link.dropboxEsami)}" target="_blank" rel="noopener">appelli passati${EXT}</a>.`)}
+    <div class="notice info"><span class="ico">${icon("timer")}</span><span>Allo scritto hai <strong>4 esercizi da 6 punti</strong> e 2 domande di teoria in 2 ore e 30 minuti, senza appunti né formulario. Prova a risolvere ogni esercizio in circa 30 minuti, oppure <a href="simulazione.html">genera una simulazione</a>.</span></div>
+    <div class="card" style="margin:14px 0">
       <div class="progress-row" style="margin:0">
-        <span class="label"><strong>Tracce risolte</strong></span><span class="val" id="ex-count"></span>
+        <span class="label">Tipologie risolte</span><span class="val" id="ex-count"></span>
         <span id="ex-bar" style="grid-column:1/-1"></span>
       </div>
     </div>
@@ -52,7 +49,7 @@ page(async () => {
     <div id="groups">
       ${byBlock.map(({ b, items }) => `
         <section class="exgroup" data-group="${b ? b.id : "altro"}">
-          <h2 style="border-bottom:3px solid ${blockColor(b && b.id)};padding-bottom:6px">${b ? `${b.numero}. ${esc(b.titolo)}` : "Trasversali"}</h2>
+          <div class="section-title"><h2 style="display:flex;align-items:center;gap:10px"><span class="dot" style="--bc:${blockColor(b && b.id)};width:10px;height:10px"></span>${b ? `${b.numero}. ${esc(b.titolo)}` : "Trasversali"}</h2></div>
           ${items.map(card).join("")}
         </section>`).join("")}
     </div>

@@ -9,12 +9,12 @@ Sito personale e **non ufficiale**. Programma, calendario e struttura d'esame so
 | Pagina | File | Contenuto |
 |---|---|---|
 | Home | `index.html` | Panoramica del corso, progressi per blocco, prossima lezione, backup dei progressi |
-| Programma | `programma.html` | I 7 blocchi (ore, capitoli), sezioni e argomenti ufficiali spuntabili, testo integrale, lezioni collegate |
-| Percorso | `calendario.html` | Le 60 lezioni in ordine cronologico, spuntabili, con filtri per blocco/tipo/testo |
+| Programma | `programma.html` | Due viste nella stessa pagina: **Lezioni** (le 60 lezioni in ordine, spuntabili, con filtri) e **Programma ufficiale** (7 blocchi con ore, capitoli, argomenti e testo integrale). `calendario.html` rimanda qui |
+| Simula esame | `simulazione.html` | Generatore di prove: scritto (4 esercizi di blocchi diversi + 2 domande di teoria, timer 2h30) o orale (3 domande, opzionale una di laboratorio), autocorrezione con totale, soglia e voto stimato. Il codice prova nell'URL la rende riproducibile |
 | Formulario | `formulario.html` | Formule per blocco con KaTeX (Maxwell in forma integrale e locale, ecc.), filtro, stampa |
 | Esercizi | `esercizi.html` | Tracce di esercizio ricavate dal calendario, per blocco; testi da completare |
 | Laboratorio | `laboratorio.html` | Le 5 esperienze con obiettivo, strumentazione e checklist della relazione |
-| Esame | `esame.html` | Struttura di scritto e orale, soglia, voto finale, simulatore, risultati di apprendimento, Dropbox |
+| Esame | `esame.html` | Struttura di scritto e orale, soglia, voto finale, risultati di apprendimento, Dropbox |
 | Risorse | `risorse.html` | Testo di riferimento, dispense, pagina Roma, Dropbox |
 | Cerca | `cerca.html` | Ricerca in programma, lezioni, formule, esercizi e laboratorio |
 | Privacy | `privacy.html` | Informativa: nessun cookie, dati solo nel browser, statistiche facoltative |
@@ -38,7 +38,8 @@ Sito personale e **non ufficiale**. Programma, calendario e struttura d'esame so
 │   ├── css/style.css               stile (tema chiaro/scuro con variabili CSS)
 │   ├── js/common.js                header, tema, caricamento dati, localStorage, KaTeX
 │   ├── js/<pagina>.js              uno script per pagina
-│   └── vendor/katex/               KaTeX 0.16.22 incluso nel repo (funziona anche offline)
+│   ├── vendor/katex/               KaTeX 0.16.22 incluso nel repo (funziona anche offline)
+│   └── vendor/geist/               font Geist e Geist Mono (licenza OFL)
 │   ├── js/static.js                script delle pagine statiche (privacy, note legali, 404)
 │   └── img/                        icone PWA e immagine Open Graph (PNG compressi)
 ├── favicon.ico, favicon.svg, apple-touch-icon.png, site.webmanifest
@@ -74,7 +75,7 @@ python3 -m http.server 8000
 
 - **Non cambiare gli `id`** esistenti (`b1a-3`, `es12`, `lab2:c4`, …): sono le chiavi con cui vengono salvati i progressi. Puoi aggiungere voci nuove con `id` nuovi.
 - **LaTeX nei JSON**: ogni backslash va raddoppiato (`"\\vec E"`). Nei campi di testo (`note`, `testo`, `soluzione`) la matematica inline va tra `$...$` e quella in display tra `$$...$$`.
-- **Esercizi**: in `esercizi.json` i campi `testo` e `soluzione` sono `null`, cioè da completare. Quando inserisci il testo sparisce il segnaposto.
+- **Esercizi**: in `esercizi.json` i campi `testo` e `soluzione` sono `null`, cioè da completare. Quando inserisci il testo, compare sia nella pagina Esercizi sia nelle simulazioni d'esame.
 - **Risultati di apprendimento**: in `esame.json` i 6 livelli sono segnaposto (`"placeholder": true`). Copia il testo ufficiale dalla pagina Roma e imposta `placeholder` a `false`.
 - **Laboratorio**: obiettivi e strumentazione sono indicativi (`"indicativo": true`). Correggili secondo le schede del docente e imposta `indicativo` a `false`.
 - **Collegamenti lezione → programma**: il campo `sezioni` di `lezioni.json` è indicativo, ricavato dal titolo della lezione. Puoi correggerlo liberamente.
@@ -88,7 +89,7 @@ python3 -m http.server 8000
 
 ## Progressi
 
-Le checkbox (argomenti, lezioni, esercizi, checklist del laboratorio e dell'esame) sono salvate in `localStorage` con la chiave `fg2-progress-v1`, quindi restano **solo nel browser in uso**. Per passare da computer a telefono usa **Home → Backup dei progressi → Esporta / Importa**.
+Le checkbox (lezioni, esercizi, checklist del laboratorio e dell'esame) sono salvate in `localStorage` con la chiave `fg2-progress-v1`, quindi restano **solo nel browser in uso**. Per passare da computer a telefono usa **Home → Backup dei progressi → Esporta / Importa**.
 
 ## Contenuti da completare / verificare
 
@@ -99,3 +100,7 @@ Le checkbox (argomenti, lezioni, esercizi, checklist del laboratorio e dell'esam
 - Formulario: formule standard in unità SI; verifica notazione e convenzioni di segno sul Mencuccini-Silvestrini.
 
 KaTeX è distribuito con licenza MIT (`assets/vendor/katex/LICENSE`).
+
+## Design
+
+Font Geist (self-hosted), tema chiaro/scuro, animazioni leggere: comparsa degli elementi allo scroll, transizioni tra pagine (View Transitions API, dove il browser la supporta), micro-interazioni su pulsanti e checkbox. Con l'impostazione di sistema "riduci movimento" le animazioni vengono disattivate. Il design segue le Web Interface Guidelines di Vercel (skill `web-design-guidelines` in `.agents/skills/`).

@@ -7,15 +7,15 @@ page(async () => {
   // indice: { tipo, titolo, meta, url, testo }
   const idx = [];
   for (const b of d.programma.blocchi) {
-    idx.push({ tipo: "Programma", titolo: `Blocco ${b.numero} — ${b.titolo}`, meta: `${b.ore} ore${b.capitoli ? " · " + b.capitoli : ""}`, url: `programma.html#${b.id}` });
+    idx.push({ tipo: "Programma", titolo: `Blocco ${b.numero} — ${b.titolo}`, meta: `${b.ore} ore${b.capitoli ? " · " + b.capitoli : ""}`, url: `programma.html?vista=programma#${b.id}` });
     for (const s of b.sezioni) {
-      if (s.titolo) idx.push({ tipo: "Programma", titolo: s.titolo, meta: `Blocco ${b.numero}`, url: `programma.html#${s.id}` });
-      for (const a of s.argomenti) idx.push({ tipo: "Programma", titolo: a.testo, meta: `Blocco ${b.numero} — ${b.titolo}${s.titolo ? " · " + s.titolo : ""}`, url: `programma.html#${a.id}` });
+      if (s.titolo) idx.push({ tipo: "Programma", titolo: s.titolo, meta: `Blocco ${b.numero}`, url: `programma.html?vista=programma#${s.id}` });
+      for (const a of s.argomenti) idx.push({ tipo: "Programma", titolo: a.testo, meta: `Blocco ${b.numero} — ${b.titolo}${s.titolo ? " · " + s.titolo : ""}`, url: `programma.html?vista=programma#${a.id}` });
     }
   }
   for (const l of d.lezioni.lezioni) {
     const bl = [...new Set(l.sezioni.map(blockOfSection))].map((id) => `Blocco ${blocchi[id].numero}`).join(", ");
-    idx.push({ tipo: "Lezioni", titolo: `Lezione ${l.n}`, meta: [TIPI_LEZIONE[l.tipo], l.capitoli, bl].filter(Boolean).join(" · "), testo: l.titolo, url: `calendario.html#lez-${l.n}` });
+    idx.push({ tipo: "Lezioni", titolo: `Lezione ${l.n}`, meta: [TIPI_LEZIONE[l.tipo], l.capitoli, bl].filter(Boolean).join(" · "), testo: l.titolo, url: `programma.html#lez-${l.n}` });
   }
   for (const fb of d.formule.blocchi) {
     const b = blocchi[fb.blocco];
@@ -35,8 +35,7 @@ page(async () => {
   const ORDER = ["Programma", "Lezioni", "Formule", "Esercizi", "Laboratorio"];
 
   app.innerHTML = `
-    <h1>Cerca</h1>
-    <p class="page-intro">Cerca un argomento per scoprire in quale blocco, lezione, formula, esercizio o esperienza di laboratorio compare.</p>
+    ${pageHead("Cerca", "Trova un argomento", "Scopri in quale blocco, lezione, formula, esercizio o esperienza di laboratorio compare.")}
     <div class="toolbar">
       <input type="search" id="q" name="q" placeholder="Es. Gauss, dipolo, Thevenin, Poynting, isteresi…" aria-label="Cerca nel sito" autocomplete="off" enterkeyhint="search">
     </div>

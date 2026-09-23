@@ -15,12 +15,12 @@ page(async () => {
         <span>${i + 1}. ${esc(x.titolo)}</span>
         <span class="badge" data-lab-pct="${x.id}"></span>
       </h2>
-      <div class="chips">${x.lezioni.map((n) => `<a class="chip" href="calendario.html#lez-${n}" title="${esc(lezIndex[n] ? lezIndex[n].titolo : "")}">Lezione ${n}</a>`).join("")}</div>
+      <div class="chips">${x.lezioni.map((n) => `<a class="chip" href="programma.html#lez-${n}" title="${esc(lezIndex[n] ? lezIndex[n].titolo : "")}">Lezione ${n}</a>`).join("")}</div>
       <div class="grid grid-2" style="margin-top:10px">
         <div>
-          <h3>Obiettivo ${x.indicativo ? `<span class="badge placeholder">indicativo</span>` : ""}</h3>
+          <h3>Obiettivo ${x.indicativo ? `<span class="badge">indicativo</span>` : ""}</h3>
           <p>${esc(x.obiettivo)}</p>
-          <h3>Strumentazione tipica ${x.indicativo ? `<span class="badge placeholder">indicativa</span>` : ""}</h3>
+          <h3>Strumentazione tipica ${x.indicativo ? `<span class="badge">indicativa</span>` : ""}</h3>
           <ul>${x.strumentazione.map((s) => `<li>${esc(s)}</li>`).join("")}</ul>
           ${x.formule.length ? `<h3>Formule utili</h3>${x.formule.filter((id) => fIndex[id]).map((id) => `
             <div class="formula" style="margin:6px 0"><div class="fname"><a href="formulario.html#f-${id}">${esc(fIndex[id].nome)}</a></div><div class="fmath" translate="no">${tex(fIndex[id].tex, true)}</div></div>`).join("")}` : ""}
@@ -34,14 +34,12 @@ page(async () => {
   };
 
   app.innerHTML = `
-    <h1>Laboratorio</h1>
-    <p class="page-intro">Blocco 7 — Laboratorio con relazioni (25 ore). Le cinque esperienze del programma ufficiale, con le lezioni del calendario in cui vengono spiegate o svolte.</p>
-    <div class="notice"><strong>All'orale porta le relazioni di laboratorio</strong> svolte durante il corso: possono esserci domande sulle esperienze.
-      Obiettivi, strumentazione e voci “specifiche” della checklist sono <strong>indicativi</strong>: confermali con le schede del docente e modificali in <code>data/laboratorio.json</code>.</div>
+    ${pageHead("Blocco 7 · 25 ore", "Laboratorio e relazioni", "Le cinque esperienze del programma ufficiale, con le lezioni in cui vengono spiegate o svolte e una checklist per scrivere la relazione.")}
+    <div class="notice"><span class="ico">${icon("info")}</span><span><strong>All'orale porta le relazioni di laboratorio</strong>: possono esserci domande sulle esperienze. Obiettivi e strumentazione qui sotto sono indicativi: fanno fede le schede e le indicazioni dei docenti.</span></div>
     <div class="card" style="margin:12px 0">
       <h2>Teoria della misura</h2>
       <p>Errori sistematici e casuali, distribuzioni, media, varianza, Chebyshev, propagazione delle incertezze, confronto tra misure, minimi quadrati e media pesata
-        (<a href="calendario.html#lez-22">lezione 22</a>, <a href="calendario.html#lez-23">lezione 23</a>). Riferimento: dispense del docente sulla teoria della misura.</p>
+        (<a href="programma.html#lez-22">lezione 22</a>, <a href="programma.html#lez-23">lezione 23</a>). Riferimento: dispense del docente sulla teoria della misura.</p>
       <a class="btn" href="formulario.html#b7">Formule di teoria della misura</a>
     </div>
     <div id="labs">${laboratorio.esperienze.map(labCard).join("")}</div>`;

@@ -7,9 +7,7 @@ page(async () => {
   const wide = (f) => f.tex.length > 140; // formule lunghe occupano tutta la riga
 
   app.innerHTML = `
-    <h1>Formulario</h1>
-    <p class="page-intro">Formule chiave per ogni blocco, in unità SI. Ricontrollale sempre sul Mencuccini-Silvestrini e sugli appunti:
-      notazione e convenzioni di segno possono variare. Per aggiungere o correggere una formula modifica <code>data/formule.json</code>.</p>
+    ${pageHead("Formulario", "Le formule che servono", "Le formule chiave di ogni blocco in unità SI, dalla legge di Coulomb alle equazioni di Maxwell. All'esame non si può portare nulla: usale per ripassare e confrontale sempre con il Mencuccini-Silvestrini.")}
     <div class="toolbar no-print">
       <input type="search" id="q" name="q" placeholder="Filtra formule (es. Poynting, capacità, Snell)…" aria-label="Filtra formule" autocomplete="off">
       <button class="btn" type="button" id="print-btn">Stampa formulario</button>
@@ -21,7 +19,7 @@ page(async () => {
       ${formule.blocchi.map((fb) => {
         const b = blocchi[fb.blocco];
         return `<section class="fblock" id="${b.id}" style="--bc:${blockColor(b.id)}">
-          <h2>${b.numero}. ${esc(b.titolo)} ${b.capitoli ? `<span class="badge">${esc(b.capitoli)}</span>` : ""}</h2>
+          <h2><span class="dot" style="--bc:${blockColor(b.id)}"></span>${b.numero}. ${esc(b.titolo)} ${b.capitoli ? `<span class="badge">${esc(b.capitoli)}</span>` : ""}</h2>
           ${fb.gruppi.map((g) => `
             <div class="fgroup">
               <h3>${esc(g.titolo)}</h3>

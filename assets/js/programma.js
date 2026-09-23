@@ -1,68 +1,164 @@
-/* Programma: 7 blocchi espandibili con argomenti spuntabili */
+/* Programma: una sola pagina con due viste
+   - "Lezioni": le 60 lezioni in ordine cronologico, spuntabili (unico avanzamento del sito)
+   - "Programma ufficiale": i 7 blocchi con ore, capitoli e argomenti ufficiali */
 page(async () => {
   const { programma, lezioni } = await loadData("programma", "lezioni");
+  const { sezioni } = indexProgramma(programma);
+  const lez = lezioni.lezioni;
   const app = $("#app");
 
-  // lezioni collegate a ciascuna sezione
-  const lezPerSez = {};
-  for (const l of lezioni.lezioni) for (const s of l.sezioni) (lezPerSez[s] = lezPerSez[s] || []).push(l);
-
+  const lezPerBlocco = {};
+  for (const l of lez) for (const b of new Set(l.sezioni.map(blockOfSection))) (lezPerBlocco[b] = lezPerBlocco[b] || []).push(l);
   const totOre = programma.blocchi.reduce((a, b) => a + b.ore, 0);
 
+  const lessonCard = (l) => {
+    const firstBlock = l.sezioni.length ? blockOfSection(l.sezioni[0]) : null;
+    return `<article class="lesson" id="lez-${l.n}" data-n="${l.n}" style="--bc:${blockColor(firstBlock)}">
+      <div class="lnum" aria-hidden="true">${String(l.n).padStart(2, "0")}</div>
+      <div>
+        <div class="lhead">
+          <span class="badge next-tag">Prossima</span>
+          <span class="badge ${l.tipo}">${TIPI_LEZIONE[l.tipo] || esc(l.tipo)}</span>
+          ${l.capitoli ? `<span class="badge">${esc(l.capitoli)}</span>` : ""}
+        </div>
+        ${checkbox("lesson", String(l.n), `<span class="visually-hidden">Lezione ${l.n}: </span>${esc(l.titolo)}`)}
+        ${l.sezioni.length ? `<div class="chips" style="margin-top:8px">${l.sezioni.map((sid) => {
+          const s = sezioni[sid];
+          return s ? `<a class="chip bchip" style="--bc:${blockColor(blockOfSection(sid))}" href="#${sid}" data-goto="programma">${esc(s.titolo ? s.titolo : `${s.blocco.numero}. ${s.blocco.titolo}`)}</a>` : "";
+        }).join("")}</div>` : ""}
+      </div>
+    </article>`;
+  };
+
+  const blockCard = (b) => `
+    <details class="block" id="${b.id}" style="--bc:${blockColor(b.id)}">
+      <summary>
+        <span class="num">${b.numero}</span>
+        <span>
+          <span class="title">${esc(b.titolo)}</span><br>
+          <span class="meta">${b.ore}&nbsp;ore${b.capitoli ? ` · ${esc(b.capitoli)}` : ""} · ${(lezPerBlocco[b.id] || []).length}&nbsp;lezioni</span>
+        </span>
+        <span class="side"><span data-bpct="${b.id}"></span>${icon("chev", "chev")}</span>
+        <span data-bbar="${b.id}" style="grid-column:2 / -1"></span>
+      </summary>
+      <div class="block-body">
+        ${b.sezioni.map((s) => `
+          <div class="section" id="${s.id}">
+            ${s.titolo ? `<h3>${esc(s.titolo)}</h3>` : ""}
+            <ul class="bullet-list">${s.argomenti.map((a) => `<li id="${a.id}">${esc(a.testo)}</li>`).join("")}</ul>
+            <details class="official"><summary>Testo ufficiale</summary><blockquote>${esc(s.testoUfficiale)}</blockquote></details>
+          </div>`).join("")}
+        ${(lezPerBlocco[b.id] || []).length ? `
+          <div class="small muted" style="margin-top:10px">Lezioni del blocco</div>
+          <div class="chips">${lezPerBlocco[b.id].map((l) => `<a class="chip" href="#lez-${l.n}" data-goto="lezioni" data-l="${l.n}" title="${esc(l.titolo)}">L${l.n}</a>`).join("")}</div>` : ""}
+        <div class="chips" style="margin-top:10px">
+          <a class="chip" href="formulario.html#${b.id}">${icon("sigma")} Formule</a>
+          <a class="chip" href="esercizi.html?blocco=${b.id}">${icon("pencil")} Esercizi</a>
+        </div>
+      </div>
+    </details>`;
+
   app.innerHTML = `
-    <h1>Programma ufficiale</h1>
-    <p class="page-intro">I 7 blocchi del programma con ore e capitoli di riferimento del Mencuccini-Silvestrini (${totOre} ore complessive).
-      Gli argomenti sono quelli del testo ufficiale, divisi in voci spuntabili; il testo integrale di ogni sezione è sotto “Testo ufficiale”.</p>
-    <div class="toolbar no-print">
-      <button class="btn" id="open-all" type="button">Espandi tutto</button>
-      <button class="btn" id="close-all" type="button">Comprimi tutto</button>
+    ${pageHead("Programma", "Lezioni e programma ufficiale", `Studia nell'ordine del corso e spunta le lezioni fatte, oppure consulta il programma ufficiale nei 7 blocchi (${totOre} ore, riferimento Mencuccini-Silvestrini).`)}
+    <div class="card" style="margin-bottom:16px">
+      <div class="progress-row" style="padding:0">
+        <span class="label">Lezioni completate</span><span class="val" id="lez-count"></span>
+        <span id="lez-bar" style="grid-column:1/-1"></span>
+      </div>
     </div>
-    <div id="blocks">
-      ${programma.blocchi.map((b) => `
-        <details class="block" id="${b.id}" style="--bc:${blockColor(b.id)}">
-          <summary>
-            <span class="num">${b.numero}</span>
-            <span>
-              <span class="title">${esc(b.titolo)}</span><br>
-              <span class="meta">${b.ore} ore${b.capitoli ? ` · riferimento ${esc(b.capitoli)}` : ""}</span>
-            </span>
-            <span class="pct" data-pct="${b.id}"></span>
-            <span class="progress-slot" data-bar="${b.id}" style="grid-column:2 / -1"></span>
-          </summary>
-          <div class="block-body">
-            ${b.sezioni.map((s) => `
-              <div class="section" id="${s.id}">
-                ${s.titolo ? `<h3>${esc(s.titolo)}</h3>` : ""}
-                <ul class="topic-list">
-                  ${s.argomenti.map((a) => `<li id="${a.id}">${checkbox("topic", a.id, esc(a.testo))}</li>`).join("")}
-                </ul>
-                <details class="official">
-                  <summary>Testo ufficiale</summary>
-                  <blockquote>${esc(s.testoUfficiale)}</blockquote>
-                </details>
-                ${(lezPerSez[s.id] || []).length ? `
-                  <div class="small muted">Lezioni collegate:</div>
-                  <div class="chips">${lezPerSez[s.id].map((l) => `<a class="chip" href="calendario.html#lez-${l.n}" title="${esc(l.titolo)}">L${l.n}</a>`).join("")}</div>` : ""}
-                <div class="chips" style="margin-top:6px">
-                  <a class="chip" href="formulario.html#${b.id}">Formule del blocco</a>
-                  <a class="chip" href="esercizi.html?blocco=${b.id}">Esercizi del blocco</a>
-                </div>
-              </div>`).join("")}
-          </div>
-        </details>`).join("")}
-    </div>`;
+    <div class="segmented" role="tablist" aria-label="Vista">
+      <button type="button" role="tab" id="tab-lezioni" data-value="lezioni" aria-controls="panel-lezioni" aria-selected="true">Lezioni</button>
+      <button type="button" role="tab" id="tab-programma" data-value="programma" aria-controls="panel-programma" aria-selected="false">Programma ufficiale</button>
+    </div>
+
+    <section id="panel-lezioni" role="tabpanel" aria-labelledby="tab-lezioni">
+      <div class="toolbar no-print">
+        <input type="search" id="q" name="q" placeholder="Filtra per parola (es. Gauss, Thevenin, dipolo)…" aria-label="Filtra lezioni" autocomplete="off">
+        <select id="f-blocco" name="blocco" aria-label="Filtra per blocco">
+          <option value="">Tutti i blocchi</option>
+          ${programma.blocchi.map((b) => `<option value="${b.id}">${b.numero}. ${esc(b.titolo)}</option>`).join("")}
+        </select>
+        <select id="f-tipo" name="tipo" aria-label="Filtra per tipo">
+          <option value="">Tutti i tipi</option>
+          ${Object.entries(TIPI_LEZIONE).map(([k, v]) => `<option value="${k}">${v}</option>`).join("")}
+        </select>
+        <label><input type="checkbox" id="f-todo" name="todo"> Solo da studiare</label>
+      </div>
+      <p class="small muted" id="shown" role="status" aria-live="polite"></p>
+      <div class="lessons" id="lessons">${lez.map(lessonCard).join("")}</div>
+    </section>
+
+    <section id="panel-programma" role="tabpanel" aria-labelledby="tab-programma" hidden>
+      <div class="toolbar no-print">
+        <button class="btn" id="open-all" type="button">Espandi tutto</button>
+        <button class="btn" id="close-all" type="button">Comprimi tutto</button>
+      </div>
+      ${programma.blocchi.map(blockCard).join("")}
+    </section>`;
+
+  const cards = $all(".lesson");
 
   function updateProgress() {
+    const done = lez.filter((l) => Store.get("lesson", String(l.n))).length;
+    $("#lez-count").textContent = `${done}/${lez.length}`;
+    $("#lez-bar").innerHTML = progressBar(pct(done, lez.length));
+    const next = lez.find((l) => !Store.get("lesson", String(l.n)));
+    cards.forEach((c) => {
+      const n = c.dataset.n;
+      c.classList.toggle("done", Store.get("lesson", n));
+      c.classList.toggle("next", !!next && String(next.n) === n);
+    });
     for (const b of programma.blocchi) {
-      const ids = b.sezioni.flatMap((s) => s.argomenti.map((a) => a.id));
-      const done = Store.count("topic", ids);
-      $(`[data-pct="${b.id}"]`).textContent = `${done}/${ids.length}`;
-      $(`[data-bar="${b.id}"]`).innerHTML = progressBar(pct(done, ids.length), blockColor(b.id));
+      const bl = lezPerBlocco[b.id] || [];
+      const d = bl.filter((l) => Store.get("lesson", String(l.n))).length;
+      $(`[data-bpct="${b.id}"]`).textContent = bl.length ? `${d}/${bl.length}` : "";
+      $(`[data-bbar="${b.id}"]`).innerHTML = bl.length ? progressBar(pct(d, bl.length), blockColor(b.id)) : "";
     }
   }
-  updateProgress();
-  bindChecks($("#blocks"), updateProgress);
 
+  function applyFilters() {
+    const words = norm($("#q").value.trim()).split(/\s+/).filter(Boolean);
+    const fb = $("#f-blocco").value, ft = $("#f-tipo").value, todo = $("#f-todo").checked;
+    let shown = 0;
+    lez.forEach((l, i) => {
+      const hay = norm(`${l.n} ${l.titolo} ${l.capitoli || ""}`);
+      const ok = words.every((w) => hay.includes(w))
+        && (!fb || l.sezioni.some((s) => blockOfSection(s) === fb))
+        && (!ft || l.tipo === ft)
+        && (!todo || !Store.get("lesson", String(l.n)));
+      cards[i].classList.toggle("hidden", !ok);
+      if (ok) shown++;
+    });
+    $("#shown").textContent = shown === lez.length ? ""
+      : shown ? `${shown} lezioni mostrate su ${lez.length}` : "Nessuna lezione corrisponde ai filtri: prova un'altra parola o scegli “Tutti i blocchi”.";
+    setParams({ q: $("#q").value.trim(), blocco: fb, tipo: ft, todo });
+  }
+
+  // vista iniziale: dal parametro ?vista= o dall'ancora (#lez-… / #b…)
+  const params = getParams();
+  const h = location.hash.slice(1);
+  const initial = /^b\d/.test(h) ? "programma" : /^lez-/.test(h) ? "lezioni" : (params.get("vista") === "programma" ? "programma" : "lezioni");
+  const tabs = segmented($(".segmented"), (v) => setParams({ vista: v === "programma" ? "programma" : "" }));
+  tabs.select(initial);
+
+  // i link interni tra le due viste cambiano scheda prima di scorrere
+  app.addEventListener("click", (e) => {
+    const a = e.target.closest("a[data-goto]");
+    if (!a) return;
+    e.preventDefault();
+    tabs.select(a.dataset.goto, true);
+    history.replaceState(null, "", a.getAttribute("href"));
+    scrollToHash();
+  });
+
+  $("#q").value = params.get("q") || "";
+  $("#f-blocco").value = params.get("blocco") || "";
+  $("#f-tipo").value = params.get("tipo") || "";
+  $("#f-todo").checked = params.get("todo") === "1";
+  updateProgress();
+  if (params.get("q") || params.get("blocco") || params.get("tipo") || params.get("todo")) applyFilters();
+  bindChecks($("#lessons"), () => { updateProgress(); if ($("#f-todo").checked) applyFilters(); });
+  ["#q", "#f-blocco", "#f-tipo", "#f-todo"].forEach((s) => $(s).addEventListener("input", applyFilters));
   $("#open-all").onclick = () => $all("details.block").forEach((d) => (d.open = true));
   $("#close-all").onclick = () => $all("details.block").forEach((d) => (d.open = false));
 });
