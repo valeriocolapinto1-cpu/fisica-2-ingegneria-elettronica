@@ -1,12 +1,15 @@
-/* Simulazione d'esame: genera uno scritto (4 esercizi + 2 domande) o un orale (3 domande)
-   con la stessa struttura della prova reale. Il "codice prova" (seed) nell'URL rende la
-   prova riproducibile e condivisibile. */
+/* Simulazione d'esame con i testi reali degli appelli.
+   - Scritto misto: 4 esercizi di argomenti diversi + 2 domande di teoria, presi da appelli diversi
+   - Appello vero: un appello passato completo, estratto a caso
+   - Orale: 3 domande di teoria di argomenti diversi (una può essere sul laboratorio)
+   Il codice prova nell'URL rende la prova riproducibile e condivisibile. */
 page(async () => {
-  const { programma, esercizi, esame, laboratorio, corso } = await loadData("programma", "esercizi", "esame", "laboratorio", "corso");
-  const { blocchi, sezioni } = indexProgramma(programma);
+  const { programma, appelli, esame, laboratorio } = await loadData("programma", "appelli", "esame", "laboratorio");
+  const { blocchi } = indexProgramma(programma);
   const app = $("#app");
   const S = esame.scritto, O = esame.orale;
   const DURATA = 150 * 60; // 2 ore e 30 minuti
+  const PT_EX = S.composizione[0].puntiCadauno, PT_TH = S.composizione[1].puntiCadauno, PT_OR = O.composizione[0].puntiCadauno;
 
   /* ---------- generatore pseudo-casuale riproducibile ---------- */
   function rng(seed) {
@@ -22,65 +25,56 @@ page(async () => {
   const pick = (r, arr) => arr[Math.floor(r() * arr.length)];
   const shuffle = (r, arr) => { const a = [...arr]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
   const newSeed = () => Math.floor(Math.random() * 900000) + 100000;
+  const groupBy = (arr) => arr.reduce((m, x) => ((m[x.blocco] = m[x.blocco] || []).push(x), m), {});
 
   /* ---------- materiale ---------- */
-  // esercizi dei blocchi 1-5 (lo scritto non comprende laboratorio e fisica moderna)
-  const exByBlock = {};
-  for (const e of esercizi.esercizi) {
-    const b = blockOfSection(e.sezione);
-    if (!b || !["b1", "b2", "b3", "b4", "b5"].includes(b)) continue;
-    (exByBlock[b] = exByBlock[b] || []).push(e);
-  }
-  // argomenti ufficiali per le domande di teoria (blocchi 1-6)
-  const topicsByBlock = {};
-  for (const b of programma.blocchi) {
-    if (b.id === "b7") continue;
-    topicsByBlock[b.id] = b.sezioni.flatMap((s) => s.argomenti.map((a) => ({ ...a, sezione: s })));
-  }
+  const allEx = appelli.appelli.flatMap((a) => a.esercizi.map((e) => ({ ...e, appello: a })));
+  const allTh = appelli.appelli.flatMap((a) => a.teoria.map((q) => ({ ...q, appello: a })));
+  const exBy = groupBy(allEx), thBy = groupBy(allTh);
+  const completi = appelli.appelli.filter((a) => a.esercizi.length === 4 && a.teoria.length >= 2);
 
-  function genScritto(seed) {
+  function genMisto(seed) {
     const r = rng(seed);
-    const exBlocks = shuffle(r, Object.keys(exByBlock)).slice(0, 4).sort();
-    const ex = exBlocks.map((b) => pick(r, exByBlock[b]));
-    const thBlocks = shuffle(r, Object.keys(topicsByBlock)).slice(0, 2).sort();
-    const th = thBlocks.map((b) => ({ blocco: b, topic: pick(r, topicsByBlock[b]) }));
-    return { ex, th };
+    const bs = shuffle(r, Object.keys(exBy)).slice(0, 4).sort();
+    const ex = bs.map((b) => pick(r, exBy[b]));
+    const tb = shuffle(r, Object.keys(thBy)).slice(0, 2);
+    return { ex, th: tb.map((b) => pick(r, thBy[b])) };
+  }
+  function genVero(seed) {
+    const a = pick(rng(seed * 3 + 1), completi);
+    return { appello: a, ex: a.esercizi.map((e) => ({ ...e, appello: a })), th: a.teoria.slice(0, 2).map((q) => ({ ...q, appello: a })) };
   }
   function genOrale(seed, conLab) {
     const r = rng(seed * 7 + 3);
     const n = conLab ? 2 : 3;
-    const qBlocks = shuffle(r, Object.keys(topicsByBlock)).slice(0, n).sort();
-    const qs = qBlocks.map((b) => ({ blocco: b, topic: pick(r, topicsByBlock[b]) }));
-    if (conLab) qs.push({ blocco: "b7", lab: pick(r, laboratorio.esperienze) });
+    const qs = shuffle(r, Object.keys(thBy)).slice(0, n).map((b) => pick(r, thBy[b]));
+    if (conLab) qs.push({ lab: pick(r, laboratorio.esperienze), blocco: "b7" });
     return qs;
   }
 
   /* ---------- stato ---------- */
   const params = getParams();
   let seed = Number(params.get("prova")) || newSeed();
-  let tipo = params.get("tipo") === "orale" ? "orale" : "scritto";
+  let tipo = ["misto", "vero", "orale"].includes(params.get("tipo")) ? params.get("tipo") : "misto";
   let conLab = params.get("lab") !== "0";
 
   app.innerHTML = `
-    ${pageHead("Allenamento", "Simula l'esame", `Genera una prova casuale con la stessa struttura di quella vera: lo scritto ha ${esc(S.descrizione)} in ${esc(S.durata)}, l'orale ${esc(O.descrizione)}. Correggiti da solo e guarda se superi la soglia.`)}
-    <div class="notice info"><span class="ico">${icon("info")}</span><span>Gli esercizi sono scelti tra le tipologie svolte a lezione e le domande tra gli argomenti del programma ufficiale. Per allenarti sui testi veri usa gli <a href="${esc(corso.link.dropboxEsami)}" target="_blank" rel="noopener">appelli degli anni passati${EXT}</a>.</span></div>
+    ${pageHead("Allenamento", "Simula l'esame", `Prove costruite con i testi veri degli appelli: ${esc(S.descrizione)} in ${esc(S.durata)} per lo scritto, ${esc(O.descrizione)} per l'orale. Risolvi, poi apri le soluzioni e datti un voto.`)}
     <div class="sim-bar no-print">
       <div class="segmented" role="tablist" aria-label="Tipo di prova">
-        <button type="button" role="tab" id="tab-scritto" data-value="scritto" aria-controls="panel-scritto" aria-selected="true">Scritto</button>
-        <button type="button" role="tab" id="tab-orale" data-value="orale" aria-controls="panel-orale" aria-selected="false">Orale</button>
+        <button type="button" role="tab" id="tab-misto" data-value="misto" aria-controls="panel-prova" aria-selected="true">Scritto misto</button>
+        <button type="button" role="tab" id="tab-vero" data-value="vero" aria-controls="panel-prova" aria-selected="false">Appello vero</button>
+        <button type="button" role="tab" id="tab-orale" data-value="orale" aria-controls="panel-prova" aria-selected="false">Orale</button>
       </div>
       <div class="sim-actions">
-        <button class="btn primary" type="button" id="gen-btn">Genera nuova prova</button>
+        <button class="btn primary" type="button" id="gen-btn">Nuova prova</button>
         <button class="btn" type="button" id="copy-btn">${icon("link")} Copia link</button>
-        <button class="btn" type="button" id="print-btn">Stampa</button>
       </div>
     </div>
     <p class="small muted" id="seed-info" role="status" aria-live="polite"></p>
+    <section id="panel-prova" role="tabpanel"></section>`;
 
-    <section id="panel-scritto" role="tabpanel" aria-labelledby="tab-scritto"></section>
-    <section id="panel-orale" role="tabpanel" aria-labelledby="tab-orale" hidden></section>`;
-
-  /* ---------- timer dello scritto ---------- */
+  /* ---------- timer ---------- */
   let remaining = DURATA, timerId = null;
   const fmtTime = (t) => [Math.floor(t / 3600), Math.floor((t % 3600) / 60), t % 60].map((x, i) => (i ? String(x).padStart(2, "0") : x)).join(":");
   function renderTimer() {
@@ -89,110 +83,90 @@ page(async () => {
     el.textContent = fmtTime(remaining);
     el.classList.toggle("low", remaining <= 10 * 60 && remaining > 0);
     $("#timer-bar").innerHTML = progressBar(pct(DURATA - remaining, DURATA));
-    $("#timer-btn").textContent = timerId ? "Pausa" : remaining === DURATA ? "Avvia timer" : remaining === 0 ? "Tempo scaduto" : "Riprendi";
-    $("#timer-btn").disabled = remaining === 0;
+    const b = $("#timer-btn");
+    b.textContent = timerId ? "Pausa" : remaining === DURATA ? "Avvia" : remaining === 0 ? "Tempo scaduto" : "Riprendi";
+    b.disabled = remaining === 0;
   }
   function toggleTimer() {
     if (timerId) { clearInterval(timerId); timerId = null; renderTimer(); return; }
     timerId = setInterval(() => {
       remaining = Math.max(0, remaining - 1);
-      if (remaining === 0) { clearInterval(timerId); timerId = null; $("#timer-msg").textContent = "Tempo scaduto: consegna e passa alla correzione."; }
+      if (remaining === 0) { clearInterval(timerId); timerId = null; $("#timer-msg").textContent = "Tempo scaduto: apri le soluzioni e correggi."; }
       renderTimer();
     }, 1000);
     renderTimer();
   }
-  function resetTimer() { clearInterval(timerId); timerId = null; remaining = DURATA; $("#timer-msg").textContent = ""; renderTimer(); }
+  function resetTimer() { clearInterval(timerId); timerId = null; remaining = DURATA; const m = $("#timer-msg"); if (m) m.textContent = ""; renderTimer(); }
   window.addEventListener("beforeunload", (e) => { if (timerId) { e.preventDefault(); e.returnValue = ""; } });
 
   /* ---------- rendering ---------- */
   const scoreInput = (name, max, label) =>
-    `<label class="q-score">Punteggio <input type="number" name="${name}" min="0" max="${max}" step="0.5" inputmode="decimal" autocomplete="off" placeholder="0–${max}…" aria-label="${label}"> / ${max}</label>`;
-  const topicQuestion = (q) => {
-    const s = q.topic.sezione, b = blocchi[q.blocco];
-    return `<p class="q-title">Esponi: «${esc(q.topic.testo.charAt(0).toUpperCase() + q.topic.testo.slice(1))}»</p>
-      <p class="small muted" style="margin:0">Dal blocco ${b.numero} · ${esc(s.titolo || b.titolo)}${b.capitoli ? ` · ${esc(b.capitoli)}` : ""}</p>`;
-  };
+    `<label class="q-score">Voto <input type="number" name="${name}" min="0" max="${max}" step="0.5" inputmode="decimal" autocomplete="off" placeholder="0–${max}…" aria-label="${label}"> / ${max}</label>`;
+  const chip = (b) => `<span class="chip bchip" style="--bc:${blockColor(b)};margin:0">${esc(blocchi[b].titolo)}</span>`;
+  const exCard = (e, i) => `
+    <article class="card q-card" style="--bc:${blockColor(e.blocco)}">
+      <div class="q-num" aria-hidden="true">${i + 1}</div>
+      <div style="min-width:0">
+        <div class="q-head">${chip(e.blocco)}<span class="small muted">${esc(e.appello.titolo)}</span></div>
+        <div class="ex-figure">${e.img ? examImg(e.img, e.testo) : `<p>${esc(e.testo)}</p>`}</div>
+        ${e.soluzione ? `<details class="official sol"><summary>Mostra la soluzione</summary>${examImg(e.soluzione, `Soluzione dell'esercizio ${i + 1}`)}</details>` : ""}
+        ${scoreInput(`ex${i}`, PT_EX, `Voto esercizio ${i + 1}`)}
+      </div>
+    </article>`;
+  const thCard = (q, i, max, pre) => `
+    <article class="card q-card" style="--bc:${blockColor(q.blocco)}">
+      <div class="q-num" aria-hidden="true">${pre}${i + 1}</div>
+      <div>
+        ${q.lab
+          ? `<div class="q-head">${chip("b7")}</div><p class="q-title">Esperienza di laboratorio: «${esc(q.lab.titolo)}». Descrivi scopo, apparato, misure e analisi dei dati.</p>`
+          : `<div class="q-head">${chip(q.blocco)}<span class="small muted">${esc(q.appello.titolo)}</span></div><p class="q-title">${esc(q.testo)}</p>`}
+        ${scoreInput(`${pre || "or"}${i}`, max, `Voto domanda ${pre}${i + 1}`)}
+      </div>
+    </article>`;
+  const totalCard = (label) => `
+    <div class="card total-card" aria-live="polite">
+      <div><div class="small muted">${label}</div><div class="stat" id="tot">—</div></div>
+      <div id="esito" class="small muted">Dopo la correzione inserisci i voti.</div>
+    </div>
+    <p class="field-error" id="err" role="alert" hidden></p>`;
 
-  function renderScritto() {
-    const { ex, th } = genScritto(seed);
-    $("#panel-scritto").innerHTML = `
-      <div class="card timer-card no-print">
-        <div>
-          <div class="small muted">Tempo a disposizione</div>
-          <div class="timer" id="timer" role="timer" aria-live="off">${fmtTime(remaining)}</div>
+  function render() {
+    const panel = $("#panel-prova");
+    if (tipo === "orale") {
+      const qs = genOrale(seed, conLab);
+      panel.innerHTML = `
+        <label class="toolbar no-print" style="margin-top:0"><input type="checkbox" id="lab-toggle" ${conLab ? "checked" : ""}> Includi una domanda sul laboratorio</label>
+        <div class="q-list">${qs.map((q, i) => thCard(q, i, PT_OR, "")).join("")}</div>
+        ${totalCard("Totale orale")}`;
+      $("#lab-toggle").onchange = (e) => { conLab = e.target.checked; setParams({ lab: conLab ? "" : "0" }); render(); };
+    } else {
+      const p = tipo === "vero" ? genVero(seed) : genMisto(seed);
+      panel.innerHTML = `
+        ${p.appello ? `<p class="small muted" style="margin-top:0">Appello del <strong>${esc(p.appello.titolo)}</strong>.</p>` : ""}
+        <div class="card timer-card no-print">
+          <div><div class="small muted">Tempo</div><div class="timer" id="timer" role="timer" aria-live="off">${fmtTime(remaining)}</div></div>
+          <div class="sim-actions"><button class="btn blue" type="button" id="timer-btn">Avvia</button><button class="btn" type="button" id="timer-reset">Azzera</button></div>
+          <div class="timer-track" id="timer-bar"></div>
+          <p class="small muted" id="timer-msg" role="status" aria-live="polite" style="margin:0"></p>
         </div>
-        <div class="sim-actions">
-          <button class="btn blue" type="button" id="timer-btn">Avvia timer</button>
-          <button class="btn" type="button" id="timer-reset">Azzera</button>
-        </div>
-        <div class="timer-track" id="timer-bar"></div>
-        <p class="small muted" id="timer-msg" role="status" aria-live="polite" style="margin:0"></p>
-      </div>
-      <h2>Esercizi <span class="badge">${ex.length} × ${S.composizione[0].puntiCadauno} punti</span></h2>
-      <div class="q-list">
-        ${ex.map((e, i) => {
-          const s = sezioni[e.sezione];
-          return `<article class="card q-card" style="--bc:${blockColor(s.blocco.id)}">
-            <div class="q-num" aria-hidden="true">${i + 1}</div>
-            <div>
-              <div class="q-head"><span class="chip bchip" style="--bc:${blockColor(s.blocco.id)};margin:0">${s.blocco.numero}. ${esc(s.blocco.titolo)}</span></div>
-              <p class="q-title"><span class="visually-hidden">Esercizio ${i + 1}: </span>${esc(e.titolo)}</p>
-              <div class="q-body">${e.testo
-                ? esc(e.testo)
-                : `<p class="soft-text small" style="margin:0">Tipologia svolta nella <a href="programma.html#lez-${e.lezione}">lezione ${e.lezione}</a>. Il testo completo non è ancora disponibile: cerca un esercizio di questo tipo negli appelli passati e risolvilo a tempo.</p>`}</div>
-              ${scoreInput(`ex${i}`, S.composizione[0].puntiCadauno, `Punteggio esercizio ${i + 1}`)}
-            </div>
-          </article>`;
-        }).join("")}
-      </div>
-      <h2>Domande di teoria <span class="badge">${th.length} × ${S.composizione[1].puntiCadauno} punti</span></h2>
-      <div class="q-list">
-        ${th.map((q, i) => `<article class="card q-card" style="--bc:${blockColor(q.blocco)}">
-            <div class="q-num" aria-hidden="true">T${i + 1}</div>
-            <div>${topicQuestion(q)}${scoreInput(`th${i}`, S.composizione[1].puntiCadauno, `Punteggio domanda di teoria ${i + 1}`)}</div>
-          </article>`).join("")}
-      </div>
-      <div class="card total-card" aria-live="polite">
-        <div><div class="small muted">Totale scritto</div><div class="stat" id="tot-scritto">—</div></div>
-        <div id="esito-scritto" class="small muted">Inserisci i punteggi dopo esserti corretto.</div>
-      </div>
-      <p class="field-error" id="err-scritto" role="alert" hidden></p>`;
-    $all(".q-body", $("#panel-scritto")).forEach(renderMathIn);
-    $("#timer-btn").onclick = toggleTimer;
-    $("#timer-reset").onclick = resetTimer;
-    renderTimer();
-    reveal($("#panel-scritto"));
+        <h2>Esercizi <span class="badge">${p.ex.length} × ${PT_EX} punti</span></h2>
+        <div class="q-list">${p.ex.map(exCard).join("")}</div>
+        ${p.th.length ? `<h2>Teoria <span class="badge">${p.th.length} × ${PT_TH} punti</span></h2>
+        <div class="q-list">${p.th.map((q, i) => thCard(q, i, PT_TH, "T")).join("")}</div>` : ""}
+        ${totalCard("Totale scritto")}`;
+      $("#timer-btn").onclick = toggleTimer;
+      $("#timer-reset").onclick = resetTimer;
+      renderTimer();
+    }
+    reveal(panel);
+    updateTotal();
+    $("#seed-info").textContent = `Codice prova ${seed}: con “Copia link” la ritrovi o la condividi.`;
+    setParams({ prova: seed, tipo: tipo === "misto" ? "" : tipo });
   }
 
-  function renderOrale() {
-    const qs = genOrale(seed, conLab);
-    $("#panel-orale").innerHTML = `
-      <label class="toolbar no-print" style="margin-top:0"><input type="checkbox" id="lab-toggle" ${conLab ? "checked" : ""}> Includi una domanda sulle esperienze di laboratorio</label>
-      <div class="q-list">
-        ${qs.map((q, i) => `<article class="card q-card" style="--bc:${blockColor(q.blocco)}">
-            <div class="q-num" aria-hidden="true">${i + 1}</div>
-            <div>
-              ${q.lab
-                ? `<p class="q-title">Esperienza di laboratorio: «${esc(q.lab.titolo)}»</p>
-                   <p class="small muted" style="margin:0">Descrivi scopo, apparato, procedura di misura e analisi dei dati, come nella tua relazione. <a href="laboratorio.html#${q.lab.id}">Scheda dell'esperienza</a></p>`
-                : topicQuestion(q)}
-              ${scoreInput(`or${i}`, O.composizione[0].puntiCadauno, `Punteggio domanda orale ${i + 1}`)}
-            </div>
-          </article>`).join("")}
-      </div>
-      <div class="card total-card" aria-live="polite">
-        <div><div class="small muted">Totale orale</div><div class="stat" id="tot-orale">—</div></div>
-        <div id="esito-orale" class="small muted">Con lo scritto compilato vedi anche il voto finale stimato.</div>
-      </div>
-      <p class="field-error" id="err-orale" role="alert" hidden></p>`;
-    $("#lab-toggle").onchange = (e) => { conLab = e.target.checked; setParams({ lab: conLab ? "" : "0" }); renderOrale(); };
-    reveal($("#panel-orale"));
-  }
-
-  /* ---------- punteggi ---------- */
-  function readScores(panel) {
+  function updateTotal() {
     const errors = [];
-    const vals = $all('input[type="number"]', panel).map((el) => {
+    const vals = $all('.q-score input', $("#panel-prova")).map((el) => {
       el.removeAttribute("aria-invalid");
       if (el.value === "" && !el.validity.badInput) return null;
       const v = Number(el.value);
@@ -203,46 +177,25 @@ page(async () => {
       }
       return v;
     });
-    return { vals, errors };
-  }
-  let scrittoTot = null;
-  function updateTotals() {
-    const ps = $("#panel-scritto"), po = $("#panel-orale");
-    const a = readScores(ps), b = readScores(po);
-    const errS = $("#err-scritto"), errO = $("#err-orale");
-    errS.hidden = !a.errors.length; errS.textContent = a.errors.join(" ");
-    errO.hidden = !b.errors.length; errO.textContent = b.errors.join(" ");
-    const any = (v) => v.some((x) => x !== null);
-    scrittoTot = any(a.vals) ? a.vals.reduce((x, v) => x + (v || 0), 0) : null;
-    const oraleTot = any(b.vals) ? b.vals.reduce((x, v) => x + (v || 0), 0) : null;
-    $("#tot-scritto").textContent = scrittoTot === null ? "—" : `${NUM.format(scrittoTot)}/30`;
-    $("#esito-scritto").innerHTML = scrittoTot === null ? "Inserisci i punteggi dopo esserti corretto."
-      : scrittoTot >= S.soglia ? `<span class="badge ok">Superato</span> soglia ${S.soglia}/30` : `<span class="badge soft">Non superato</span> servono almeno ${S.soglia} punti`;
-    $("#tot-orale").textContent = oraleTot === null ? "—" : `${NUM.format(oraleTot)}/30`;
-    $("#esito-orale").innerHTML = oraleTot !== null && scrittoTot !== null && scrittoTot >= S.soglia
-      ? `Voto finale stimato: <strong>${NUM.format((scrittoTot + oraleTot) / 2)}/30</strong> <span class="muted">(media tra scritto e orale)</span>`
-      : "Con lo scritto superato vedi anche il voto finale stimato.";
+    const err = $("#err");
+    err.hidden = !errors.length; err.textContent = errors.join(" ");
+    if (vals.every((v) => v === null)) { $("#tot").textContent = "—"; $("#esito").textContent = "Dopo la correzione inserisci i voti."; return; }
+    const tot = vals.reduce((a, v) => a + (v || 0), 0);
+    $("#tot").textContent = `${NUM.format(tot)}/30`;
+    $("#esito").innerHTML = tipo === "orale" ? "Voto finale = media tra scritto e orale."
+      : tot >= S.soglia ? `<span class="badge ok">Superato</span> soglia ${S.soglia}/30` : `<span class="badge soft">Non superato</span> servono almeno ${S.soglia} punti`;
   }
 
-  function renderAll() {
-    renderScritto();
-    renderOrale();
-    updateTotals();
-    $("#seed-info").textContent = `Codice prova: ${seed}. Con “Copia link” puoi ritrovarla o condividerla.`;
-    setParams({ prova: seed, tipo: tipo === "orale" ? "orale" : "" });
-  }
-
-  const tabs = segmented($(".segmented"), (v) => { tipo = v; setParams({ tipo: v === "orale" ? "orale" : "" }); });
+  const tabs = segmented($(".segmented"), (v) => { tipo = v; resetTimer(); render(); });
   tabs.select(tipo);
-  app.addEventListener("input", (e) => { if (e.target.matches('.q-score input')) updateTotals(); });
+  app.addEventListener("input", (e) => { if (e.target.matches(".q-score input")) updateTotal(); });
   $("#gen-btn").onclick = () => {
     if (timerId && !confirm("Il timer è in corso: vuoi davvero generare una nuova prova?")) return;
-    seed = newSeed(); resetTimer(); renderAll();
+    seed = newSeed(); resetTimer(); render(); window.scrollTo({ top: 0 });
   };
-  $("#print-btn").onclick = () => window.print();
   $("#copy-btn").onclick = async () => {
-    try { await navigator.clipboard.writeText(location.href); $("#seed-info").textContent = `Link copiato. Codice prova: ${seed}.`; }
-    catch (e) { $("#seed-info").textContent = `Copia non riuscita: seleziona l'indirizzo nella barra del browser. Codice prova: ${seed}.`; }
+    try { await navigator.clipboard.writeText(location.href); $("#seed-info").textContent = `Link copiato (codice prova ${seed}).`; }
+    catch (e) { $("#seed-info").textContent = `Copia non riuscita: copia l'indirizzo dalla barra del browser (codice prova ${seed}).`; }
   };
-  renderAll();
+  render();
 });

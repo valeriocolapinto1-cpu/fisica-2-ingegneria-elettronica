@@ -8,14 +8,12 @@
    ========================================================= */
 
 const NAV = [
-  { href: "index.html", label: "Home" },
   { href: "programma.html", label: "Programma" },
   { href: "formulario.html", label: "Formulario" },
   { href: "esercizi.html", label: "Esercizi" },
   { href: "simulazione.html", label: "Simula esame" },
-  { href: "laboratorio.html", label: "Laboratorio" },
   { href: "esame.html", label: "Esame" },
-  { href: "risorse.html", label: "Risorse" },
+  { href: "laboratorio.html", label: "Laboratorio" },
 ];
 
 /* icone SVG in linea (decorative) */
@@ -33,6 +31,10 @@ const ICONS = {
 };
 function icon(name, cls = "") {
   return `<svg class="${cls}" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${ICONS[name] || ""}</svg>`;
+}
+/* immagine ritagliata da un PDF d'esame (dimensioni esplicite, caricamento differito) */
+function examImg(im, alt) {
+  return `<img class="ex-img" src="${im.src}" width="${im.w}" height="${im.h}" alt="${esc(alt)}" loading="lazy" decoding="async">`;
 }
 /* intestazione di pagina coerente */
 function pageHead(eyebrow, title, intro) {
@@ -402,8 +404,10 @@ function segmented(el, onChange) {
       x.setAttribute("aria-selected", String(on));
       x.tabIndex = on ? 0 : -1;
       const panel = document.getElementById(x.getAttribute("aria-controls"));
-      if (panel) panel.hidden = !on;
+      if (panel) panel.hidden = true;
     });
+    const shown = document.getElementById(b.getAttribute("aria-controls"));
+    if (shown) shown.hidden = false;
     place();
     if (notify && onChange) onChange(b.dataset.value);
   };

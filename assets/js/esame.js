@@ -1,6 +1,6 @@
 /* Esame: struttura, punteggi, risultati di apprendimento */
 page(async () => {
-  const { esame, corso } = await loadData("esame", "corso");
+  const { esame, corso, risorse } = await loadData("esame", "corso", "risorse");
   const s = esame.scritto, o = esame.orale, ra = esame.risultatiApprendimento;
   const app = $("#app");
 
@@ -39,13 +39,6 @@ page(async () => {
       <a class="btn primary" href="simulazione.html">${icon("timer")} Simula uno scritto o un orale</a>
     </div>
 
-    <div class="card" style="margin-top:14px">
-      <h2>Esercizi d'esame degli appelli precedenti</h2>
-      <p>La raccolta ufficiale dei testi d'esame è il miglior allenamento per lo scritto.</p>
-      <a class="btn primary" href="${esc(corso.link.dropboxEsami)}" target="_blank" rel="noopener">Apri la cartella Dropbox${EXT}</a>
-      <a class="btn" href="esercizi.html">Tracce per argomento</a>
-    </div>
-
     <div class="grid grid-2" style="margin-top:14px">
       <section class="card" id="risultati">
         <h2>Risultati di apprendimento attesi</h2>
@@ -61,6 +54,16 @@ page(async () => {
           ${esame.criteri.map((c) => `<li>${checkbox("criterio", c.id, esc(c.testo))}</li>`).join("")}
         </ul>
       </section>
+    </div>
+
+    <div class="section-title" id="materiali"><h2>Materiali</h2></div>
+    <div class="card">
+      <dl class="kv">
+        <dt>Testo</dt><dd>${esc(risorse.testo.autori)}, <em>${esc(risorse.testo.titolo)}</em>, ${esc(risorse.testo.editore)}</dd>
+        <dt>Dispense</dt><dd>Teoria della misura, distribuite dai docenti durante il corso</dd>
+        <dt>Appelli</dt><dd><a href="esercizi.html">Tutti gli esercizi con soluzioni</a> · <a href="${esc(corso.link.dropboxEsami)}" target="_blank" rel="noopener">PDF originali su Dropbox${EXT}</a></dd>
+        <dt>Corso</dt><dd><a href="${esc(corso.link.paginaRoma)}" target="_blank" rel="noopener">Pagina ufficiale Roma${EXT}</a></dd>
+      </dl>
     </div>`;
 
   bindChecks($("#ra-list"));

@@ -1,6 +1,6 @@
 /* Ricerca testuale su programma, lezioni, formule, esercizi, laboratorio */
 page(async () => {
-  const d = await loadData("programma", "lezioni", "formule", "esercizi", "laboratorio");
+  const d = await loadData("programma", "lezioni", "formule", "appelli", "laboratorio");
   const { blocchi, sezioni } = indexProgramma(d.programma);
   const app = $("#app");
 
@@ -23,9 +23,13 @@ page(async () => {
       idx.push({ tipo: "Formule", titolo: f.nome, meta: `Blocco ${b.numero} · ${g.titolo}`, testo: f.note, extra: f.tex, url: `formulario.html#f-${f.id}` });
     }
   }
-  for (const e of d.esercizi.esercizi) {
-    const s = sezioni[e.sezione];
-    idx.push({ tipo: "Esercizi", titolo: e.titolo, meta: `Lezione ${e.lezione}${s ? " · Blocco " + s.blocco.numero : ""}`, testo: e.testo, url: `esercizi.html#${e.id}` });
+  for (const ap of d.appelli.appelli) {
+    for (const e of ap.esercizi) {
+      idx.push({ tipo: "Esercizi", titolo: `${ap.titolo} · esercizio ${e.n}`, meta: blocchi[e.blocco].titolo, testo: e.testo.length > 220 ? e.testo.slice(0, 220) + "…" : e.testo, extra: e.testo, url: `esercizi.html#es-${ap.id}-${e.n}` });
+    }
+    for (const q of ap.teoria) {
+      idx.push({ tipo: "Esercizi", titolo: `Domanda di teoria · ${ap.titolo}`, meta: blocchi[q.blocco].titolo, testo: q.testo, url: `esercizi.html?vista=teoria` });
+    }
   }
   for (const x of d.laboratorio.esperienze) {
     idx.push({ tipo: "Laboratorio", titolo: x.titolo, meta: `Lezioni ${x.lezioni.join(", ")}`, testo: x.obiettivo, extra: x.strumentazione.join(" "), url: `laboratorio.html#${x.id}` });
@@ -35,7 +39,7 @@ page(async () => {
   const ORDER = ["Programma", "Lezioni", "Formule", "Esercizi", "Laboratorio"];
 
   app.innerHTML = `
-    ${pageHead("Cerca", "Trova un argomento", "Scopri in quale blocco, lezione, formula, esercizio o esperienza di laboratorio compare.")}
+    ${pageHead("Cerca", "Trova un argomento", "Cerca tra lezioni, programma, formule, esercizi d'esame e laboratorio.")}
     <div class="toolbar">
       <input type="search" id="q" name="q" placeholder="Es. Gauss, dipolo, Thevenin, Poynting, isteresi…" aria-label="Cerca nel sito" autocomplete="off" enterkeyhint="search">
     </div>

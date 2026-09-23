@@ -94,7 +94,19 @@ page(async () => {
         <button class="btn" id="close-all" type="button">Comprimi tutto</button>
       </div>
       ${programma.blocchi.map(blockCard).join("")}
-    </section>`;
+    </section>
+
+    <div class="section-title" id="backup"><h2>Porta i progressi con te</h2></div>
+    <div class="card no-print">
+      <p class="small muted" style="margin-top:0">Le spunte restano solo in questo browser. Per passarle dal computer al telefono esporta il file e importalo sull'altro dispositivo.</p>
+      <div class="toolbar" style="margin-bottom:0">
+        <button class="btn" id="export-btn" type="button">Esporta progressi</button>
+        <button class="btn" id="import-btn" type="button">Importa progressi</button>
+        <input type="file" id="import-file" name="import-file" accept="application/json,.json" class="hidden" aria-label="File dei progressi da importare">
+        <button class="btn danger" id="reset-btn" type="button">Azzera tutto</button>
+      </div>
+      <p class="status" id="backup-status" role="status" aria-live="polite"></p>
+    </div>`;
 
   const cards = $all(".lesson");
 
@@ -159,6 +171,31 @@ page(async () => {
   if (params.get("q") || params.get("blocco") || params.get("tipo") || params.get("todo")) applyFilters();
   bindChecks($("#lessons"), () => { updateProgress(); if ($("#f-todo").checked) applyFilters(); });
   ["#q", "#f-blocco", "#f-tipo", "#f-todo"].forEach((s) => $(s).addEventListener("input", applyFilters));
+  const status = (msg, kind) => { const el = $("#backup-status"); el.textContent = msg; el.className = `status ${kind || ""}`; };
+  const refreshChecks = () => $all('input[type="checkbox"][data-cat]', app).forEach((cb) => {
+    cb.checked = Store.get(cb.dataset.cat, cb.dataset.id);
+    cb.closest(".check")?.classList.toggle("done", cb.checked);
+  });
+  $("#export-btn").onclick = () => {
+    const blob = new Blob([Store.exportJSON()], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `fisica2-progressi-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    status(`File scaricato: ${a.download}. Importalo sull'altro dispositivo da questa sezione.`, "ok");
+  };
+  $("#import-btn").onclick = () => $("#import-file").click();
+  $("#import-file").onchange = async (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    try { Store.importJSON(await f.text()); refreshChecks(); updateProgress(); status(`Progressi importati: ${Store.total()} voci.`, "ok"); }
+    catch (err) { status(`Importazione non riuscita. ${err.message}`, "error"); }
+  };
+  $("#reset-btn").onclick = () => {
+    if (!confirm("Vuoi davvero azzerare tutti i progressi salvati in questo browser?")) return;
+    Store.reset(); refreshChecks(); updateProgress(); status("Progressi azzerati.", "ok");
+  };
   $("#open-all").onclick = () => $all("details.block").forEach((d) => (d.open = true));
   $("#close-all").onclick = () => $all("details.block").forEach((d) => (d.open = false));
 });
