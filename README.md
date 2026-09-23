@@ -36,6 +36,7 @@ Sito personale e **non ufficiale**. Programma, calendario e struttura d'esame so
 │   ├── js/common.js                header, tema, caricamento dati, localStorage, KaTeX
 │   ├── js/<pagina>.js              uno script per pagina
 │   └── vendor/katex/               KaTeX 0.16.22 incluso nel repo (funziona anche offline)
+├── .github/workflows/pages.yml     deploy automatico su GitHub Pages
 └── .nojekyll                       serve file statici su GitHub Pages senza passare da Jekyll
 ```
 
@@ -48,10 +49,10 @@ Sito personale e **non ufficiale**. Programma, calendario e struttura d'esame so
 
 ## Pubblicare su GitHub Pages
 
-1. Su GitHub apri **Settings → Pages**.
-2. In *Build and deployment* scegli **Source: Deploy from a branch**.
-3. Seleziona il branch (es. `main`) e la cartella **`/ (root)`**, poi **Save**.
-4. Dopo circa un minuto il sito è raggiungibile su `https://<utente>.github.io/<nome-repo>/`.
+Il workflow `.github/workflows/pages.yml` pubblica il sito automaticamente a ogni push su `main`.
+Se il primo deploy fallisce perché Pages non è ancora attivo: **Settings → Pages → Build and deployment → Source: GitHub Actions**, poi rilancia il workflow da **Actions → Deploy su GitHub Pages → Run workflow**.
+
+Indirizzo del sito: `https://<utente>.github.io/<nome-repo>/`.
 
 ## Provarlo in locale
 
