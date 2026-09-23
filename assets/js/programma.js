@@ -12,7 +12,7 @@ page(async () => {
   app.innerHTML = `
     <h1>Programma ufficiale</h1>
     <p class="page-intro">I 7 blocchi del programma con ore e capitoli di riferimento del Mencuccini-Silvestrini (${totOre} ore complessive).
-      Gli argomenti sono quelli del testo ufficiale, divisi in voci spuntabili; il testo integrale di ogni sezione è sotto "Testo ufficiale".</p>
+      Gli argomenti sono quelli del testo ufficiale, divisi in voci spuntabili; il testo integrale di ogni sezione è sotto “Testo ufficiale”.</p>
     <div class="toolbar no-print">
       <button class="btn" id="open-all" type="button">Espandi tutto</button>
       <button class="btn" id="close-all" type="button">Comprimi tutto</button>

@@ -26,7 +26,7 @@ page(async () => {
           <h3>${esc(r.titolo)}</h3>
           <p class="small muted">${esc(r.descrizione)}</p>
           ${r.url
-            ? `<a class="btn primary" href="${esc(r.url)}" target="_blank" rel="noopener">Apri ↗</a>`
+            ? `<a class="btn primary" href="${esc(r.url)}" target="_blank" rel="noopener">Apri${EXT}</a>`
             : `<p class="placeholder-text small" style="margin:0">Link non ancora disponibile: aggiungilo nel campo <code>url</code> di <code>data/risorse.json</code>.</p>`}
         </div>`).join("")}
     </div>

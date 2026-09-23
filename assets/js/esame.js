@@ -38,24 +38,28 @@ page(async () => {
       <p style="font-size:1.05rem">${esc(esame.votoFinale)}</p>
       <div class="formula" style="max-width:420px">${tex(String.raw`V_{\text{finale}} = \frac{V_{\text{scritto}} + V_{\text{orale}}}{2}`)}</div>
       <h3>Simulatore</h3>
-      <div class="calc no-print">
-        <label>Esercizi (0-6 ciascuno):
-          ${[1, 2, 3, 4].map((i) => `<input type="number" class="sc-ex" min="0" max="6" step="0.5" aria-label="Esercizio ${i}" placeholder="E${i}">`).join("")}
-        </label>
-      </div>
-      <div class="calc no-print" style="margin-top:8px">
-        <label>Teoria (0-3 ciascuna):
-          ${[1, 2].map((i) => `<input type="number" class="sc-th" min="0" max="3" step="0.5" aria-label="Domanda di teoria ${i}" placeholder="T${i}">`).join("")}
-        </label>
-        <label>Orale (0-30): <input type="number" id="orale" min="0" max="30" step="1" aria-label="Voto orale" placeholder="—"></label>
-      </div>
-      <p id="calc-out" class="small" style="margin-top:10px"></p>
+      <form class="no-print" id="calc" novalidate>
+        <fieldset class="calc-group">
+          <legend>Esercizi (0–6 punti ciascuno)</legend>
+          <div class="calc">${[1, 2, 3, 4].map((i) => `<input type="number" class="sc-ex" name="esercizio${i}" min="0" max="6" step="0.5" inputmode="decimal" autocomplete="off" aria-label="Punteggio esercizio ${i}" placeholder="E${i}…">`).join("")}</div>
+        </fieldset>
+        <fieldset class="calc-group">
+          <legend>Domande di teoria (0–3 punti ciascuna)</legend>
+          <div class="calc">${[1, 2].map((i) => `<input type="number" class="sc-th" name="teoria${i}" min="0" max="3" step="0.5" inputmode="decimal" autocomplete="off" aria-label="Punteggio domanda di teoria ${i}" placeholder="T${i}…">`).join("")}</div>
+        </fieldset>
+        <fieldset class="calc-group">
+          <legend>Orale (0–30)</legend>
+          <div class="calc"><input type="number" id="orale" name="orale" min="0" max="30" step="1" inputmode="numeric" autocomplete="off" aria-label="Voto dell'orale" placeholder="es. 27…"></div>
+        </fieldset>
+        <p class="field-error" id="calc-err" role="alert" hidden></p>
+      </form>
+      <p id="calc-out" class="small" style="margin-top:10px" role="status" aria-live="polite"></p>
     </div>
 
     <div class="card" style="margin-top:14px">
       <h2>Esercizi d'esame degli appelli precedenti</h2>
       <p>La raccolta ufficiale dei testi d'esame è il miglior allenamento per lo scritto.</p>
-      <a class="btn primary" href="${esc(corso.link.dropboxEsami)}" target="_blank" rel="noopener">Apri la cartella Dropbox ↗</a>
+      <a class="btn primary" href="${esc(corso.link.dropboxEsami)}" target="_blank" rel="noopener">Apri la cartella Dropbox${EXT}</a>
       <a class="btn" href="esercizi.html">Tracce per argomento</a>
     </div>
 
@@ -80,17 +84,33 @@ page(async () => {
   bindChecks($("#ra-list"));
   bindChecks($("#cr-list"));
 
-  const num = (el) => (el.value === "" ? null : Math.max(0, Math.min(Number(el.max), Number(el.value))));
+  const fmt = (v) => NUM.format(v);
   function calc() {
-    const ex = $all(".sc-ex").map(num), th = $all(".sc-th").map(num), or = num($("#orale"));
+    const errors = [];
+    const val = (el) => {
+      el.removeAttribute("aria-invalid");
+      if (el.value === "" && !el.validity.badInput) return null;
+      const v = Number(el.value);
+      if (el.validity.badInput || Number.isNaN(v) || v < Number(el.min) || v > Number(el.max)) {
+        el.setAttribute("aria-invalid", "true");
+        errors.push(`${el.getAttribute("aria-label")}: inserisci un numero tra ${el.min} e ${el.max}.`);
+        return null;
+      }
+      return v;
+    };
+    const ex = $all(".sc-ex").map(val), th = $all(".sc-th").map(val), or = val($("#orale"));
+    const errBox = $("#calc-err");
+    errBox.hidden = !errors.length;
+    errBox.textContent = errors.join(" ");
     const parts = [...ex, ...th];
     const out = $("#calc-out");
-    if (parts.every((v) => v === null) && or === null) { out.textContent = "Inserisci i punteggi per stimare il voto."; return; }
+    if (parts.every((v) => v === null) && or === null) { out.textContent = errors.length ? "" : "Inserisci i punteggi per stimare il voto."; return; }
     const scritto = parts.reduce((a, v) => a + (v || 0), 0);
-    let msg = `Scritto: <strong>${scritto}/30</strong> — ${scritto >= s.soglia ? "superato" : `sotto la soglia di ${s.soglia}`}.`;
-    if (or !== null && scritto >= s.soglia) msg += ` Voto finale stimato: <strong>${((scritto + or) / 2).toFixed(1)}/30</strong>.`;
-    out.innerHTML = msg + ` <span class="muted">(stima: arrotondamenti e lode sono decisi dai docenti)</span>`;
+    let msg = `Scritto: <strong>${fmt(scritto)}/30</strong> — ${scritto >= s.soglia ? "superato" : `sotto la soglia di ${s.soglia}`}.`;
+    if (or !== null && scritto >= s.soglia) msg += ` Voto finale stimato: <strong>${fmt((scritto + or) / 2)}/30</strong>.`;
+    out.innerHTML = msg + ` <span class="muted">(stima: arrotondamenti e lode li decidono i docenti)</span>`;
   }
-  $all(".calc input").forEach((i) => i.addEventListener("input", calc));
+  $("#calc").addEventListener("input", calc);
+  $("#calc").addEventListener("submit", (e) => e.preventDefault());
   calc();
 });

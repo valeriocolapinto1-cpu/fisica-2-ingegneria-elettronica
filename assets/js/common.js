@@ -1,8 +1,9 @@
 /* =========================================================
    common.js — funzioni condivise da tutte le pagine
-   - intestazione/navigazione, tema chiaro/scuro
+   - intestazione/navigazione, tema chiaro/scuro, piè di pagina
    - caricamento dei file JSON in /data
    - salvataggio dei progressi in localStorage
+   - banner cookie, statistiche facoltative, CTA fissa su mobile
    - rendering matematico con KaTeX
    ========================================================= */
 
@@ -25,6 +26,9 @@ const TIPI_LEZIONE = {
   altro: "Altro",
 };
 
+const NUM = new Intl.NumberFormat("it-IT", { maximumFractionDigits: 1 });
+const EXT = '<span aria-hidden="true"> ↗</span>'; // indicatore di link esterno
+
 /* ---------- utilità DOM ---------- */
 function esc(s) {
   return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -33,11 +37,24 @@ function $(sel, root = document) { return root.querySelector(sel); }
 function $all(sel, root = document) { return Array.from(root.querySelectorAll(sel)); }
 function pct(done, total) { return total ? Math.round((done / total) * 100) : 0; }
 function progressBar(p, color) {
-  return `<div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${p}"><span style="width:${p}%;${color ? `--bc:${color}` : ""}"></span></div>`;
+  return `<div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${p}" aria-label="${p}% completato"><span style="transform:scaleX(${p / 100});${color ? `--bc:${color}` : ""}"></span></div>`;
 }
 /* testo normalizzato per la ricerca: minuscolo, senza accenti */
 function norm(s) {
   return String(s ?? "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+}
+function safeGet(key) { try { return localStorage.getItem(key); } catch (e) { return null; } }
+function safeSet(key, val) { try { if (val === null) localStorage.removeItem(key); else localStorage.setItem(key, val); } catch (e) { /* storage non disponibile */ } }
+
+/* ---------- stato nell'URL (filtri condivisibili) ---------- */
+function getParams() { return new URLSearchParams(location.search); }
+function setParams(obj) {
+  const url = new URL(location);
+  for (const [k, v] of Object.entries(obj)) {
+    if (v === "" || v === false || v == null) url.searchParams.delete(k);
+    else url.searchParams.set(k, v === true ? "1" : v);
+  }
+  history.replaceState(null, "", url);
 }
 
 /* ---------- tema ---------- */
@@ -50,16 +67,21 @@ function currentTheme() {
 function toggleTheme() {
   const next = currentTheme() === "dark" ? "light" : "dark";
   document.documentElement.dataset.theme = next;
-  try { localStorage.setItem(THEME_KEY, next); } catch (e) { /* storage non disponibile */ }
+  safeSet(THEME_KEY, next);
   updateThemeButton();
 }
 function updateThemeButton() {
-  const b = $("#theme-btn");
-  if (!b) return;
   const dark = currentTheme() === "dark";
-  b.textContent = dark ? "☀" : "☾";
-  b.title = dark ? "Tema chiaro" : "Tema scuro";
-  b.setAttribute("aria-label", b.title);
+  const b = $("#theme-btn");
+  if (b) {
+    b.innerHTML = `<span aria-hidden="true">${dark ? "☀" : "☾"}</span>`;
+    b.title = dark ? "Passa al tema chiaro" : "Passa al tema scuro";
+    b.setAttribute("aria-label", b.title);
+  }
+  // la barra del browser segue il tema scelto a mano
+  if (document.documentElement.dataset.theme) {
+    $all('meta[name="theme-color"]').forEach((m) => m.setAttribute("content", dark ? "#161d27" : "#ffffff"));
+  }
 }
 
 /* ---------- header / footer ---------- */
@@ -69,24 +91,31 @@ function renderChrome() {
   header.className = "site-header";
   header.innerHTML = `
     <div class="header-inner">
-      <a class="brand" href="index.html">Fisica <span>II</span></a>
+      <a class="brand" href="index.html" translate="no">Fisica <span>II</span></a>
       <nav class="nav" id="nav" aria-label="Navigazione principale">
         ${NAV.map((n) => `<a href="${n.href}"${n.href === page ? ' aria-current="page"' : ""}>${n.label}</a>`).join("")}
       </nav>
       <form class="header-search" action="cerca.html" role="search">
-        <input type="search" name="q" placeholder="Cerca argomento…" aria-label="Cerca nel sito">
+        <input type="search" name="q" placeholder="Cerca argomento…" aria-label="Cerca nel sito" autocomplete="off" enterkeyhint="search">
       </form>
       <div class="header-tools">
         <button class="icon-btn" id="theme-btn" type="button"></button>
-        <button class="icon-btn menu-btn" id="menu-btn" type="button" aria-label="Menu" aria-expanded="false" aria-controls="nav">☰</button>
+        <button class="icon-btn menu-btn" id="menu-btn" type="button" aria-label="Apri il menu" aria-expanded="false" aria-controls="nav"><span aria-hidden="true">☰</span></button>
       </div>
     </div>`;
   document.body.prepend(header);
+  $(".skip-link") && document.body.prepend($(".skip-link")); // lo skip link resta il primo elemento
 
   const footer = document.createElement("footer");
   footer.className = "site-footer";
-  footer.innerHTML = `Fisica Generale II · Ingegneria Elettronica · Roma · a.a. 2026/2027 — sito di studio personale, non ufficiale.
-    I progressi sono salvati solo in questo browser (localStorage).`;
+  footer.innerHTML = `
+    <p>Fisica Generale II · Ingegneria Elettronica · Roma · a.a.&nbsp;2026/2027 — sito di studio personale, non ufficiale.</p>
+    <nav class="footer-links" aria-label="Link legali">
+      <a href="privacy.html">Privacy</a>
+      <a href="note-legali.html">Note legali</a>
+      <span id="footer-contact"></span>
+      <button type="button" class="linklike" id="cookie-prefs">Preferenze cookie</button>
+    </nav>`;
   document.body.append(footer);
 
   $("#theme-btn").addEventListener("click", toggleTheme);
@@ -95,7 +124,80 @@ function renderChrome() {
   menuBtn.addEventListener("click", () => {
     const open = $("#nav").classList.toggle("open");
     menuBtn.setAttribute("aria-expanded", String(open));
+    menuBtn.setAttribute("aria-label", open ? "Chiudi il menu" : "Apri il menu");
   });
+  $("#cookie-prefs").addEventListener("click", () => { safeSet(CONSENT_KEY, null); showConsentBanner(true); });
+}
+
+/* contatti (da data/corso.json) nel piè di pagina e negli elementi [data-contact] */
+function renderContacts(corso) {
+  const c = corso.contatti || {};
+  const parts = [];
+  if (c.email) parts.push(`<a href="mailto:${esc(c.email)}">${esc(c.email)}</a>`);
+  if (c.github) parts.push(`<a href="${esc(c.github)}" target="_blank" rel="noopener">GitHub${EXT}</a>`);
+  const htmlC = parts.join(" · ");
+  if (htmlC) {
+    $("#footer-contact").innerHTML = `Contatti: ${htmlC}`;
+    $all("[data-contact]").forEach((el) => (el.innerHTML = htmlC));
+  }
+}
+
+/* ---------- cookie banner e statistiche facoltative ---------- */
+const CONSENT_KEY = "fg2-consent";
+let _analyticsCode = null;
+
+function loadAnalytics() {
+  if (!_analyticsCode || document.getElementById("goatcounter")) return;
+  const s = document.createElement("script");
+  s.id = "goatcounter";
+  s.async = true;
+  s.src = "https://gc.zgo.at/count.js";
+  s.dataset.goatcounter = `https://${_analyticsCode}.goatcounter.com/count`;
+  document.body.append(s);
+}
+
+function showConsentBanner(force = false) {
+  const state = safeGet(CONSENT_KEY);
+  if (state === "granted") loadAnalytics();
+  if (state && !force) return;
+  $("#consent")?.remove();
+  const box = document.createElement("section");
+  box.id = "consent";
+  box.className = "consent";
+  box.setAttribute("aria-label", "Informativa sui cookie");
+  box.innerHTML = _analyticsCode
+    ? `<p>Questo sito non usa cookie. Vuoi consentire statistiche di visita anonime e senza cookie (GoatCounter)? <a href="privacy.html">Privacy</a></p>
+       <div class="consent-actions">
+         <button class="btn" type="button" data-consent="denied">Rifiuta</button>
+         <button class="btn primary" type="button" data-consent="granted">Accetta statistiche</button>
+       </div>`
+    : `<p>Questo sito non usa cookie né statistiche. I tuoi progressi restano solo in questo browser. <a href="privacy.html">Privacy</a></p>
+       <div class="consent-actions"><button class="btn primary" type="button" data-consent="ack">Ho capito</button></div>`;
+  document.body.append(box);
+  document.body.classList.add("has-consent");
+  box.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-consent]");
+    if (!b) return;
+    safeSet(CONSENT_KEY, b.dataset.consent);
+    if (b.dataset.consent === "granted") loadAnalytics();
+    box.remove();
+    document.body.classList.remove("has-consent");
+  });
+}
+
+/* ---------- CTA fissa su mobile: continua dalla prossima lezione ---------- */
+function renderStickyCta(lezioni) {
+  const next = lezioni.lezioni.find((l) => !Store.get("lesson", String(l.n)));
+  $("#sticky-cta")?.remove();
+  const bar = document.createElement("div");
+  bar.id = "sticky-cta";
+  bar.className = "sticky-cta";
+  bar.innerHTML = next
+    ? `<a class="btn primary" href="calendario.html#lez-${next.n}">Continua: Lezione&nbsp;${next.n}</a>
+       <a class="btn" href="cerca.html" aria-label="Cerca nel sito"><span aria-hidden="true">⌕</span> Cerca</a>`
+    : `<a class="btn primary" href="esame.html">Tutte le lezioni fatte: ripassa per l'esame</a>`;
+  document.body.append(bar);
+  document.body.classList.add("has-sticky-cta");
 }
 
 /* ---------- dati ---------- */
@@ -105,7 +207,7 @@ async function loadData(...names) {
   await Promise.all(names.map(async (n) => {
     if (!_cache[n]) {
       _cache[n] = fetch(`data/${n}.json`).then((r) => {
-        if (!r.ok) throw new Error(`HTTP ${r.status} su data/${n}.json`);
+        if (!r.ok) throw new Error(`Il file data/${n}.json ha risposto con errore HTTP ${r.status}.`);
         return r.json();
       });
     }
@@ -115,9 +217,28 @@ async function loadData(...names) {
 }
 function showLoadError(err) {
   const main = $("main");
+  main.removeAttribute("aria-busy");
+  $(".loading", main)?.remove();
   const fileProto = location.protocol === "file:";
-  main.insertAdjacentHTML("afterbegin", `<div class="notice"><strong>Impossibile caricare i dati.</strong> ${esc(err.message)}<br>
-    ${fileProto ? "Stai aprendo il sito come file locale: i browser bloccano la lettura dei JSON. Avvia un server locale nella cartella del sito, ad esempio <code>python3 -m http.server</code>, e apri <code>http://localhost:8000</code> (oppure usa la versione su GitHub Pages)." : "Controlla che il file JSON esista e sia valido."}</div>`);
+  main.insertAdjacentHTML("afterbegin", `<div class="notice" role="alert"><strong>Impossibile caricare i dati.</strong> ${esc(err.message)}<br>
+    ${fileProto
+      ? "Stai aprendo il sito come file locale e il browser blocca la lettura dei JSON. Avvia un server nella cartella del sito (<code>python3 -m http.server</code>) e apri <code>http://localhost:8000</code>, oppure usa la versione online."
+      : "Controlla la connessione e riprova. Se hai modificato un file in <code>data/</code>, verifica che sia un JSON valido (virgole e virgolette)."}
+    <div style="margin-top:8px"><button class="btn" type="button" onclick="location.reload()">Riprova</button></div></div>`);
+}
+
+/* stato di caricamento mostrato finché la pagina non ha i dati */
+function showLoading() {
+  const main = $("main");
+  if (main.children.length) return; // pagina statica: niente da caricare
+  main.setAttribute("aria-busy", "true");
+  main.innerHTML = `<div class="loading" role="status">
+      <div class="skeleton" style="width:40%;height:2rem"></div>
+      <div class="skeleton" style="width:75%"></div>
+      <div class="skeleton" style="width:60%"></div>
+      <div class="skeleton" style="height:120px"></div>
+      <span class="visually-hidden">Caricamento…</span>
+    </div>`;
 }
 
 /* blocchi del programma: indici utili */
@@ -143,12 +264,10 @@ const Store = {
   _data: null,
   _load() {
     if (this._data) return this._data;
-    try { this._data = JSON.parse(localStorage.getItem(STORE_KEY)) || {}; } catch (e) { this._data = {}; }
+    try { this._data = JSON.parse(safeGet(STORE_KEY)) || {}; } catch (e) { this._data = {}; }
     return this._data;
   },
-  _save() {
-    try { localStorage.setItem(STORE_KEY, JSON.stringify(this._data)); } catch (e) { /* storage pieno o bloccato */ }
-  },
+  _save() { safeSet(STORE_KEY, JSON.stringify(this._data)); },
   get(cat, id) { const d = this._load(); return !!(d[cat] && d[cat][id]); },
   set(cat, id, val) {
     const d = this._load();
@@ -157,10 +276,14 @@ const Store = {
     this._save();
   },
   count(cat, ids) { return ids.filter((id) => this.get(cat, id)).length; },
+  total() { return Object.values(this._load()).reduce((a, c) => a + Object.keys(c).length, 0); },
   exportJSON() { return JSON.stringify({ versione: 1, esportato: new Date().toISOString(), progressi: this._load() }, null, 2); },
   importJSON(text) {
-    const obj = JSON.parse(text);
-    if (!obj || typeof obj.progressi !== "object") throw new Error("Formato non valido");
+    let obj;
+    try { obj = JSON.parse(text); } catch (e) { throw new Error("Il file non è un JSON valido. Scegli il file .json creato con “Esporta progressi”."); }
+    if (!obj || typeof obj.progressi !== "object" || Array.isArray(obj.progressi)) {
+      throw new Error("Il file non contiene progressi di questo sito. Scegli il file creato con “Esporta progressi”.");
+    }
     this._data = obj.progressi;
     this._save();
   },
@@ -175,6 +298,7 @@ function bindChecks(root, onChange) {
     Store.set(cb.dataset.cat, cb.dataset.id, cb.checked);
     const wrap = cb.closest(".check");
     if (wrap) wrap.classList.toggle("done", cb.checked);
+    if (cb.dataset.cat === "lesson" && _cache.lezioni) _cache.lezioni.then(renderStickyCta);
     if (onChange) onChange(cb);
   });
 }
@@ -186,9 +310,9 @@ function checkbox(cat, id, labelHtml, extraClass = "") {
 /* ---------- KaTeX ---------- */
 function tex(src, display = true) {
   if (window.katex) {
-    return katex.renderToString(src, { displayMode: display, throwOnError: false, strict: "ignore" });
+    return `<span translate="no">${katex.renderToString(src, { displayMode: display, throwOnError: false, strict: "ignore" })}</span>`;
   }
-  return `<code>${esc(src)}</code>`;
+  return `<code translate="no">${esc(src)}</code>`;
 }
 function renderMathIn(el) {
   if (window.renderMathInElement) {
@@ -200,6 +324,7 @@ function renderMathIn(el) {
       throwOnError: false,
       strict: "ignore",
     });
+    $all(".katex", el).forEach((k) => k.setAttribute("translate", "no"));
   }
 }
 
@@ -214,12 +339,21 @@ function scrollToHash() {
   t.scrollIntoView({ block: t.offsetHeight > window.innerHeight / 2 ? "start" : "center" });
 }
 
-/* avvio comune: header/footer, poi la funzione della pagina */
+/* avvio comune: header/footer, stato di caricamento, poi la funzione della pagina */
 function page(init) {
   document.addEventListener("DOMContentLoaded", async () => {
     renderChrome();
+    showLoading();
+    // contatti, banner cookie e CTA mobile non bloccano la pagina
+    loadData("corso", "lezioni").then(({ corso, lezioni }) => {
+      _analyticsCode = (corso.analytics && corso.analytics.goatcounter) || null;
+      renderContacts(corso);
+      showConsentBanner();
+      renderStickyCta(lezioni);
+    }).catch(() => showConsentBanner());
     try {
       await init();
+      $("main").removeAttribute("aria-busy");
       scrollToHash();
     } catch (err) {
       console.error(err);

@@ -17,6 +17,9 @@ Sito personale e **non ufficiale**. Programma, calendario e struttura d'esame so
 | Esame | `esame.html` | Struttura di scritto e orale, soglia, voto finale, simulatore, risultati di apprendimento, Dropbox |
 | Risorse | `risorse.html` | Testo di riferimento, dispense, pagina Roma, Dropbox |
 | Cerca | `cerca.html` | Ricerca in programma, lezioni, formule, esercizi e laboratorio |
+| Privacy | `privacy.html` | Informativa: nessun cookie, dati solo nel browser, statistiche facoltative |
+| Note legali | `note-legali.html` | Termini d'uso, sito non ufficiale, licenze |
+| 404 | `404.html` | Pagina di errore con ricerca (GitHub Pages la usa in automatico) |
 
 ## Struttura dei file
 
@@ -36,6 +39,10 @@ Sito personale e **non ufficiale**. Programma, calendario e struttura d'esame so
 │   ├── js/common.js                header, tema, caricamento dati, localStorage, KaTeX
 │   ├── js/<pagina>.js              uno script per pagina
 │   └── vendor/katex/               KaTeX 0.16.22 incluso nel repo (funziona anche offline)
+│   ├── js/static.js                script delle pagine statiche (privacy, note legali, 404)
+│   └── img/                        icone PWA e immagine Open Graph (PNG compressi)
+├── favicon.ico, favicon.svg, apple-touch-icon.png, site.webmanifest
+├── robots.txt, sitemap.xml         indicizzazione (URL assoluti del sito su GitHub Pages)
 ├── .github/workflows/pages.yml     deploy automatico su GitHub Pages
 └── .nojekyll                       serve file statici su GitHub Pages senza passare da Jekyll
 ```
@@ -71,6 +78,13 @@ python3 -m http.server 8000
 - **Risultati di apprendimento**: in `esame.json` i 6 livelli sono segnaposto (`"placeholder": true`). Copia il testo ufficiale dalla pagina Roma e imposta `placeholder` a `false`.
 - **Laboratorio**: obiettivi e strumentazione sono indicativi (`"indicativo": true`). Correggili secondo le schede del docente e imposta `indicativo` a `false`.
 - **Collegamenti lezione → programma**: il campo `sezioni` di `lezioni.json` è indicativo, ricavato dal titolo della lezione. Puoi correggerlo liberamente.
+
+## SEO, contatti, statistiche
+
+- **URL del sito**: `canonical`, Open Graph, `sitemap.xml` e `robots.txt` usano `https://valeriocolapinto1-cpu.github.io/fisica-2-ingegneria-elettronica/`. Se rinomini il repo o usi un dominio tuo, aggiorna quell'indirizzo nelle pagine HTML e in `sitemap.xml`/`robots.txt`.
+- **robots.txt**: i motori di ricerca lo leggono solo nella radice del dominio. Su un sito di progetto (`utente.github.io/repo/`) conta solo se hai anche un sito utente `utente.github.io`. La sitemap puoi comunque inviarla direttamente da Google Search Console.
+- **Contatti**: `data/corso.json → contatti`. Per ora c'è solo il profilo GitHub. `email` è `null`, così l'indirizzo non viene pubblicato.
+- **Statistiche (facoltative)**: crea un account gratuito su [goatcounter.com](https://www.goatcounter.com) (senza cookie) e inserisci il codice del sito in `data/corso.json → analytics.goatcounter`. Il banner allora chiede il consenso e lo script si carica solo dopo “Accetta”. Con `null` il banner è solo informativo.
 
 ## Progressi
 

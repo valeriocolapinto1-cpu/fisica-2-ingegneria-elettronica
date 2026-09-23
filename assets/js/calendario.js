@@ -16,18 +16,18 @@ page(async () => {
       </div>
     </div>
     <div class="toolbar no-print">
-      <input type="search" id="q" placeholder="Filtra per parola (es. Gauss, Thevenin, dipolo)…" aria-label="Filtra lezioni">
-      <select id="f-blocco" aria-label="Filtra per blocco">
+      <input type="search" id="q" name="q" placeholder="Filtra per parola (es. Gauss, Thevenin, dipolo)…" aria-label="Filtra lezioni" autocomplete="off">
+      <select id="f-blocco" name="blocco" aria-label="Filtra per blocco">
         <option value="">Tutti i blocchi</option>
         ${programma.blocchi.map((b) => `<option value="${b.id}">${b.numero}. ${esc(b.titolo)}</option>`).join("")}
       </select>
-      <select id="f-tipo" aria-label="Filtra per tipo">
+      <select id="f-tipo" name="tipo" aria-label="Filtra per tipo">
         <option value="">Tutti i tipi</option>
         ${Object.entries(TIPI_LEZIONE).map(([k, v]) => `<option value="${k}">${v}</option>`).join("")}
       </select>
-      <label><input type="checkbox" id="f-todo"> Solo da studiare</label>
+      <label><input type="checkbox" id="f-todo" name="todo"> Solo da studiare</label>
     </div>
-    <p class="small muted" id="shown"></p>
+    <p class="small muted" id="shown" role="status" aria-live="polite"></p>
     <div class="lessons" id="lessons">
       ${lez.map((l) => {
         const firstBlock = l.sezioni.length ? blockOfSection(l.sezioni[0]) : null;
@@ -77,10 +77,18 @@ page(async () => {
       cards[i].classList.toggle("hidden", !ok);
       if (ok) shown++;
     });
-    $("#shown").textContent = shown === lez.length ? "" : `${shown} lezioni mostrate su ${lez.length}`;
+    $("#shown").textContent = shown === lez.length ? ""
+      : shown ? `${shown} lezioni mostrate su ${lez.length}` : "Nessuna lezione corrisponde ai filtri: prova un'altra parola o scegli “Tutti i blocchi”.";
+    setParams({ q: $("#q").value.trim(), blocco: fb, tipo: ft, todo });
   }
 
+  const params = getParams();
+  $("#q").value = params.get("q") || "";
+  $("#f-blocco").value = params.get("blocco") || "";
+  $("#f-tipo").value = params.get("tipo") || "";
+  $("#f-todo").checked = params.get("todo") === "1";
   updateProgress();
+  if (location.search) applyFilters();
   bindChecks($("#lessons"), () => { updateProgress(); if ($("#f-todo").checked) applyFilters(); });
   ["#q", "#f-blocco", "#f-tipo", "#f-todo"].forEach((s) => $(s).addEventListener("input", applyFilters));
 });

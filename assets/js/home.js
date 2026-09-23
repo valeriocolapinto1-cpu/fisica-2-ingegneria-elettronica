@@ -1,6 +1,6 @@
 /* Home: panoramica del corso e progressi */
 page(async () => {
-  const { corso, programma, lezioni, esame } = await loadData("corso", "programma", "lezioni", "esame");
+  const { corso, programma, lezioni, esame, esercizi } = await loadData("corso", "programma", "lezioni", "esame", "esercizi");
   const app = $("#app");
 
   function render() {
@@ -9,6 +9,8 @@ page(async () => {
     const allTopics = programma.blocchi.flatMap((b) => b.sezioni.flatMap((s) => s.argomenti.map((a) => a.id)));
     const topDone = Store.count("topic", allTopics);
     const next = lez.find((l) => !Store.get("lesson", String(l.n)));
+    const exTot = esercizi.esercizi.length;
+    const exDone = Store.count("exercise", esercizi.esercizi.map((e) => e.id));
 
     const blockRows = programma.blocchi.map((b) => {
       const ids = b.sezioni.flatMap((s) => s.argomenti.map((a) => a.id));
@@ -25,8 +27,19 @@ page(async () => {
 
     const s = esame.scritto, o = esame.orale;
     app.innerHTML = `
-      <h1>${esc(corso.nome)}</h1>
-      <p class="page-intro">${esc(corso.corsoDiLaurea)} · ${esc(corso.ateneo)} · ${esc(corso.anno)}, ${esc(corso.semestre)} · a.a. ${esc(corso.annoAccademico)} · ${esc(corso.canale)}</p>
+      <section class="card hero">
+        <p class="kicker">${esc(corso.corsoDiLaurea)} · ${esc(corso.ateneo)} · a.a.&nbsp;${esc(corso.annoAccademico)}</p>
+        <h1>${esc(corso.nome)}</h1>
+        <p class="muted" style="margin:0">${esc(corso.anno)}, ${esc(corso.semestre)} · ${corso.cfu}&nbsp;CFU · ${esc(corso.canale)} · ${corso.docenti.map((d) => esc(d.nome)).join(" e ")}</p>
+        <div class="hero-actions">
+          ${next
+            ? `<a class="btn primary" href="calendario.html#lez-${next.n}">${lezDone ? "Continua" : "Inizia"}: Lezione&nbsp;${next.n}</a>`
+            : `<a class="btn primary" href="esame.html">Ripassa per l'esame</a>`}
+          <a class="btn" href="esame.html">Struttura d'esame</a>
+          <a class="btn" href="formulario.html">Formulario</a>
+        </div>
+        ${next ? `<p class="hero-next">Prossima: ${esc(next.titolo)}</p>` : `<p class="hero-next">Hai completato tutte le ${lez.length} lezioni.</p>`}
+      </section>
 
       <div class="grid grid-3">
         <div class="card">
@@ -39,12 +52,10 @@ page(async () => {
           <div class="stat-label">Argomenti del programma (${topDone}/${allTopics.length})</div>
           ${progressBar(pct(topDone, allTopics.length))}
         </div>
-        <div class="card accent">
-          <div class="stat-label">Prossima lezione da studiare</div>
-          ${next
-            ? `<p style="margin:.3em 0 0"><a href="calendario.html#lez-${next.n}"><strong>Lezione ${next.n}</strong></a>${next.capitoli ? ` <span class="badge">${esc(next.capitoli)}</span>` : ""}</p>
-               <p class="small muted" style="margin:.2em 0 0">${esc(next.titolo)}</p>`
-            : `<p><strong>Hai completato tutte le lezioni.</strong></p>`}
+        <div class="card">
+          <div class="stat">${pct(exDone, exTot)}%</div>
+          <div class="stat-label">Tracce di esercizi risolte (${exDone}/${exTot})</div>
+          ${progressBar(pct(exDone, exTot))}
         </div>
       </div>
 
@@ -71,7 +82,7 @@ page(async () => {
           <p><strong>Orale</strong>: ${esc(o.descrizione)} (${o.composizione[0].puntiCadauno} punti ciascuna, max ${o.massimo}). Porta le relazioni di laboratorio.</p>
           <p><strong>Voto finale</strong>: ${esc(esame.votoFinale.toLowerCase())}</p>
           <p style="margin-bottom:0"><a class="btn primary" href="esame.html">Dettagli esame</a>
-            <a class="btn" href="${esc(corso.link.dropboxEsami)}" target="_blank" rel="noopener">Esami passati (Dropbox) ↗</a></p>
+            <a class="btn" href="${esc(corso.link.dropboxEsami)}" target="_blank" rel="noopener">Esami passati (Dropbox)${EXT}</a></p>
         </div>
       </div>
 
@@ -86,19 +97,26 @@ page(async () => {
           ["esame.html", "Esame", "Struttura, punteggi, risultati di apprendimento."],
           ["risorse.html", "Risorse", "Testo, dispense, pagina Roma, Dropbox."],
           ["cerca.html", "Cerca", "Trova un argomento in blocchi, lezioni, formule."],
-        ].map(([h, t, d]) => `<a class="card" href="${h}" style="text-decoration:none;color:inherit"><h3 style="color:var(--accent)">${t}</h3><p class="small muted" style="margin:0">${d}</p></a>`).join("")}
+        ].map(([h, t, d]) => `<a class="card card-link" href="${h}"><h3 style="color:var(--accent)">${t}</h3><p class="small muted" style="margin:0">${d}</p></a>`).join("")}
       </div>
 
-      <h2>Backup dei progressi</h2>
+      <h2 id="backup">Backup dei progressi</h2>
       <div class="card no-print">
         <p class="small muted">I progressi restano solo in questo browser. Per spostarli tra computer e telefono esporta il file e importalo sull'altro dispositivo.</p>
         <div class="toolbar" style="margin-bottom:0">
           <button class="btn" id="export-btn" type="button">Esporta progressi</button>
-          <label class="btn" for="import-file">Importa progressi</label>
-          <input type="file" id="import-file" accept="application/json,.json" class="hidden">
+          <button class="btn" id="import-btn" type="button">Importa progressi</button>
+          <input type="file" id="import-file" name="import-file" accept="application/json,.json" class="hidden" aria-label="File dei progressi da importare">
           <button class="btn danger" id="reset-btn" type="button">Azzera tutto</button>
         </div>
+        <p class="status" id="backup-status" role="status" aria-live="polite"></p>
       </div>`;
+
+    const status = (msg, kind) => {
+      const el = $("#backup-status");
+      el.textContent = msg;
+      el.className = `status ${kind || ""}`;
+    };
 
     $("#export-btn").onclick = () => {
       const blob = new Blob([Store.exportJSON()], { type: "application/json" });
@@ -107,21 +125,25 @@ page(async () => {
       a.download = `fisica2-progressi-${new Date().toISOString().slice(0, 10)}.json`;
       a.click();
       URL.revokeObjectURL(a.href);
+      status(`File scaricato: ${a.download} (${Store.total()} voci). Importalo sull'altro dispositivo da questa sezione.`, "ok");
     };
+    $("#import-btn").onclick = () => $("#import-file").click();
     $("#import-file").onchange = async (e) => {
       const f = e.target.files[0];
       if (!f) return;
       try {
         Store.importJSON(await f.text());
         render();
+        status(`Progressi importati: ${Store.total()} voci ripristinate.`, "ok");
       } catch (err) {
-        alert("Importazione non riuscita: " + err.message);
+        status(`Importazione non riuscita. ${err.message}`, "error");
       }
     };
     $("#reset-btn").onclick = () => {
       if (confirm("Vuoi davvero azzerare tutti i progressi salvati in questo browser?")) {
         Store.reset();
         render();
+        status("Progressi azzerati.", "ok");
       }
     };
   }

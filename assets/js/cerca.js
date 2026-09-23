@@ -38,9 +38,9 @@ page(async () => {
     <h1>Cerca</h1>
     <p class="page-intro">Cerca un argomento per scoprire in quale blocco, lezione, formula, esercizio o esperienza di laboratorio compare.</p>
     <div class="toolbar">
-      <input type="search" id="q" placeholder="Es. Gauss, dipolo, Thevenin, Poynting, isteresi…" aria-label="Cerca" autofocus>
+      <input type="search" id="q" name="q" placeholder="Es. Gauss, dipolo, Thevenin, Poynting, isteresi…" aria-label="Cerca nel sito" autocomplete="off" enterkeyhint="search">
     </div>
-    <div id="results"></div>`;
+    <div id="results" aria-live="polite"></div>`;
 
   // evidenzia le parole cercate ignorando maiuscole e accenti
   const hl = (text, words) => {
@@ -73,7 +73,7 @@ page(async () => {
     const box = $("#results");
     if (!words.length) { box.innerHTML = `<p class="muted">Scrivi almeno una parola.</p>`; return; }
     const hits = idx.filter((r) => words.every((w) => r._n.includes(w)));
-    if (!hits.length) { box.innerHTML = `<p class="muted">Nessun risultato per “${esc(q)}”.</p>`; return; }
+    if (!hits.length) { box.innerHTML = `<p class="muted">Nessun risultato per “${esc(q)}”. Prova con meno parole o con un termine più generale (es. “campo”, “condensatore”, “onde”).</p>`; return; }
     box.innerHTML = `<p class="small muted">${hits.length} risultati</p>` + ORDER.map((t) => {
       const g = hits.filter((r) => r.tipo === t);
       if (!g.length) return "";
@@ -92,4 +92,6 @@ page(async () => {
   if (hq) hq.value = q0;
   $("#q").addEventListener("input", run);
   run();
+  // focus automatico solo su desktop (su mobile aprirebbe la tastiera)
+  if (window.matchMedia("(pointer: fine)").matches) $("#q").focus();
 });

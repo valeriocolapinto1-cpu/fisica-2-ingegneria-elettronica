@@ -33,7 +33,7 @@ page(async () => {
     <h1>Esercizi</h1>
     <p class="page-intro">Le tipologie di esercizio svolte a lezione, ricavate dal calendario e organizzate per blocco. Sono <strong>tracce</strong>:
       il testo completo non è riportato per non inventare dati. Completa i testi dagli appunti e allenati sugli
-      <a href="${esc(corso.link.dropboxEsami)}" target="_blank" rel="noopener">esercizi d'esame degli appelli precedenti ↗</a>.</p>
+      <a href="${esc(corso.link.dropboxEsami)}" target="_blank" rel="noopener">esercizi d'esame degli appelli precedenti${EXT}</a>.</p>
     <div class="notice info">Allo scritto ci sono <strong>4 esercizi da 6 punti</strong> in 2 ore e 30 minuti, senza materiale: allenati a risolverli a tempo (circa 30 minuti l'uno) e senza formulario.</div>
     <div class="card" style="margin:12px 0">
       <div class="progress-row" style="margin:0">
@@ -42,12 +42,12 @@ page(async () => {
       </div>
     </div>
     <div class="toolbar no-print">
-      <input type="search" id="q" placeholder="Filtra (es. condensatore, solenoide, Thevenin)…" aria-label="Filtra esercizi">
-      <select id="f-blocco" aria-label="Filtra per blocco">
+      <input type="search" id="q" name="q" placeholder="Filtra (es. condensatore, solenoide, Thevenin)…" aria-label="Filtra esercizi" autocomplete="off">
+      <select id="f-blocco" name="blocco" aria-label="Filtra per blocco">
         <option value="">Tutti i blocchi</option>
         ${programma.blocchi.map((b) => `<option value="${b.id}">${b.numero}. ${esc(b.titolo)}</option>`).join("")}
       </select>
-      <label><input type="checkbox" id="f-todo"> Solo da risolvere</label>
+      <label><input type="checkbox" id="f-todo" name="todo"> Solo da risolvere</label>
     </div>
     <div id="groups">
       ${byBlock.map(({ b, items }) => `
@@ -56,7 +56,7 @@ page(async () => {
           ${items.map(card).join("")}
         </section>`).join("")}
     </div>
-    <p class="small muted" id="none" hidden>Nessun esercizio corrisponde al filtro.</p>`;
+    <p class="small muted" id="none" role="status" hidden>Nessun esercizio corrisponde ai filtri: prova un'altra parola o scegli “Tutti i blocchi”.</p>`;
 
   $all(".ex-body").forEach(renderMathIn);
 
@@ -79,9 +79,12 @@ page(async () => {
     });
     $all(".exgroup").forEach((g) => g.classList.toggle("hidden", !$all(".exercise:not(.hidden)", g).length));
     $("#none").hidden = any;
+    setParams({ q: $("#q").value.trim(), blocco: fb, todo });
   }
 
-  if (params.get("blocco")) $("#f-blocco").value = params.get("blocco");
+  $("#q").value = params.get("q") || "";
+  $("#f-blocco").value = params.get("blocco") || "";
+  $("#f-todo").checked = params.get("todo") === "1";
   updateProgress();
   applyFilters();
   bindChecks($("#groups"), () => { updateProgress(); if ($("#f-todo").checked) applyFilters(); });

@@ -11,8 +11,8 @@ page(async () => {
     <p class="page-intro">Formule chiave per ogni blocco, in unità SI. Ricontrollale sempre sul Mencuccini-Silvestrini e sugli appunti:
       notazione e convenzioni di segno possono variare. Per aggiungere o correggere una formula modifica <code>data/formule.json</code>.</p>
     <div class="toolbar no-print">
-      <input type="search" id="q" placeholder="Filtra formule (es. Poynting, capacità, Snell)…" aria-label="Filtra formule">
-      <button class="btn" type="button" onclick="window.print()">Stampa</button>
+      <input type="search" id="q" name="q" placeholder="Filtra formule (es. Poynting, capacità, Snell)…" aria-label="Filtra formule" autocomplete="off">
+      <button class="btn" type="button" id="print-btn">Stampa formulario</button>
     </div>
     <nav class="toc no-print" aria-label="Blocchi">
       ${formule.blocchi.map((fb) => { const b = blocchi[fb.blocco]; return `<a class="chip bchip" style="--bc:${blockColor(b.id)}" href="#${b.id}">${b.numero}. ${esc(b.titolo)}</a>`; }).join("")}
@@ -29,7 +29,7 @@ page(async () => {
                 ${g.formule.map((f) => `
                   <div class="formula${wide(f) ? " wide" : ""}" id="f-${esc(f.id)}" data-search="${esc(norm(`${f.nome} ${f.note || ""} ${g.titolo} ${f.tex}`))}">
                     <div class="fname">${esc(f.nome)}</div>
-                    <div class="fmath">${tex(f.tex, true)}</div>
+                    <div class="fmath" translate="no">${tex(f.tex, true)}</div>
                     ${f.note ? `<div class="fnote">${esc(f.note)}</div>` : ""}
                   </div>`).join("")}
               </div>
@@ -37,12 +37,13 @@ page(async () => {
         </section>`;
       }).join("")}
     </div>
-    <p class="small muted" id="none" hidden>Nessuna formula corrisponde al filtro.</p>`;
+    <p class="small muted" id="none" role="status" hidden>Nessuna formula corrisponde al filtro: prova un sinonimo (es. “campo” invece di “intensità”) o svuota la ricerca.</p>`;
 
   // matematica inline ($...$) nelle note
   $all(".fnote").forEach(renderMathIn);
 
-  $("#q").addEventListener("input", () => {
+  $("#print-btn").addEventListener("click", () => window.print());
+  const applyFilter = () => {
     const q = norm($("#q").value.trim());
     const words = q ? q.split(/\s+/) : [];
     let any = false;
@@ -54,5 +55,9 @@ page(async () => {
     $all(".fgroup").forEach((g) => g.classList.toggle("hidden", !$all(".formula:not(.hidden)", g).length));
     $all(".fblock").forEach((s) => s.classList.toggle("hidden", !$all(".formula:not(.hidden)", s).length));
     $("#none").hidden = any;
-  });
+    setParams({ q: $("#q").value.trim() });
+  };
+  $("#q").value = getParams().get("q") || "";
+  if ($("#q").value) applyFilter();
+  $("#q").addEventListener("input", applyFilter);
 });
