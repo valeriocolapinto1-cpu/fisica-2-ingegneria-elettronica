@@ -1,6 +1,6 @@
 /* Home: presentazione del corso, avanzamento e accesso rapido alle sezioni */
 page(async () => {
-  const { corso, lezioni, appelli, esame, formule } = await loadData("corso", "lezioni", "appelli", "esame", "formule");
+  const { corso, lezioni, appelli, esame, formule, quiz } = await loadData("corso", "lezioni", "appelli", "esame", "formule", "quiz");
   const app = $("#app");
   const lez = lezioni.lezioni;
   const nEx = appelli.appelli.reduce((a, x) => a + x.esercizi.length, 0);
@@ -12,9 +12,9 @@ page(async () => {
   const next = lez.find((l) => !Store.get("lesson", String(l.n)));
 
   const features = [
-    ["programma.html", "book", "var(--b1)", "Programma", `Le ${lez.length} lezioni in ordine e il programma ufficiale.`],
+    ["teoria.html", "book", "var(--b1)", "Teoria", "Ogni capitolo spiegato, con le dimostrazioni da sapere."],
     ["esercizi.html", "pencil", "var(--b2)", "Esercizi d'esame", `${nEx} esercizi di ${appelli.appelli.length} appelli, con soluzioni.`],
-    ["simulazione.html", "timer", "var(--b5)", "Simula l'esame", "Uno scritto o un orale casuale, con timer."],
+    ["esame.html#allenati", "timer", "var(--b5)", "Quiz e simulazioni", `${quiz.domande.length} domande corrette in automatico, scritti e orali simulati.`],
     ["formulario.html", "sigma", "var(--b3)", "Formulario", `${nFormule} formule, da Coulomb a Maxwell.`],
   ];
 
@@ -23,12 +23,12 @@ page(async () => {
       <div class="hero-glow" aria-hidden="true"></div>
       <p class="kicker"><span class="pill">a.a.&nbsp;${esc(corso.annoAccademico)}</span> ${esc(corso.corsoDiLaurea)} · Roma</p>
       <h1>Fisica Generale&nbsp;II,<br><span class="grad">tutto in un posto.</span></h1>
-      <p class="lead">Lezioni, formule, esercizi d'esame con soluzioni e simulazioni. Gratis, senza registrazione.</p>
+      <p class="lead">Teoria spiegata, formule, esercizi d'esame con soluzioni, quiz corretti in automatico e simulazioni. Gratis, senza registrazione.</p>
       <div class="hero-actions">
         ${next
           ? `<a class="btn primary lg" href="programma.html#lez-${next.n}">${lezDone ? "Continua" : "Inizia"} dalla lezione&nbsp;${next.n} <span aria-hidden="true">→</span></a>`
-          : `<a class="btn primary lg" href="simulazione.html">Simula l'esame <span aria-hidden="true">→</span></a>`}
-        <a class="btn lg" href="esercizi.html">${icon("pencil")} Esercizi d'esame</a>
+          : `<a class="btn primary lg" href="esame.html#allenati">Mettiti alla prova <span aria-hidden="true">→</span></a>`}
+        <a class="btn lg" href="esame.html#allenati">${icon("timer")} Fai un quiz</a>
       </div>
     </section>
 

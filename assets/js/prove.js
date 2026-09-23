@@ -1,12 +1,11 @@
-/* Simulazione d'esame con i testi reali degli appelli.
+/* Prove d'esame simulate con i testi reali degli appelli (usato nella pagina Esame).
    - Scritto misto: 4 esercizi di argomenti diversi + 2 domande di teoria, presi da appelli diversi
    - Appello vero: un appello passato completo, estratto a caso
    - Orale: 3 domande di teoria di argomenti diversi (una può essere sul laboratorio)
    Il codice prova nell'URL rende la prova riproducibile e condivisibile. */
-page(async () => {
-  const { programma, appelli, esame, laboratorio } = await loadData("programma", "appelli", "esame", "laboratorio");
+function createProve(root, { programma, appelli, esame, laboratorio }, initial) {
   const { blocchi } = indexProgramma(programma);
-  const app = $("#app");
+  const app = root;
   const S = esame.scritto, O = esame.orale;
   const DURATA = 150 * 60; // 2 ore e 30 minuti
   const PT_EX = S.composizione[0].puntiCadauno, PT_TH = S.composizione[1].puntiCadauno, PT_OR = O.composizione[0].puntiCadauno;
@@ -55,24 +54,18 @@ page(async () => {
   /* ---------- stato ---------- */
   const params = getParams();
   let seed = Number(params.get("prova")) || newSeed();
-  let tipo = ["misto", "vero", "orale"].includes(params.get("tipo")) ? params.get("tipo") : "misto";
+  let tipo = initial;
   let conLab = params.get("lab") !== "0";
 
-  app.innerHTML = `
-    ${pageHead("Allenamento", "Simula l'esame", `Prove costruite con i testi veri degli appelli: ${esc(S.descrizione)} in ${esc(S.durata)} per lo scritto, ${esc(O.descrizione)} per l'orale. Risolvi, poi apri le soluzioni e datti un voto.`)}
-    <div class="sim-bar no-print">
-      <div class="segmented" role="tablist" aria-label="Tipo di prova">
-        <button type="button" role="tab" id="tab-misto" data-value="misto" aria-controls="panel-prova" aria-selected="true">Scritto misto</button>
-        <button type="button" role="tab" id="tab-vero" data-value="vero" aria-controls="panel-prova" aria-selected="false">Appello vero</button>
-        <button type="button" role="tab" id="tab-orale" data-value="orale" aria-controls="panel-prova" aria-selected="false">Orale</button>
-      </div>
+  root.innerHTML = `
+    <div class="sim-bar no-print" style="margin-top:0">
+      <p class="small muted" id="seed-info" role="status" aria-live="polite" style="margin:0"></p>
       <div class="sim-actions">
         <button class="btn primary" type="button" id="gen-btn">Nuova prova</button>
         <button class="btn" type="button" id="copy-btn">${icon("link")} Copia link</button>
       </div>
     </div>
-    <p class="small muted" id="seed-info" role="status" aria-live="polite"></p>
-    <section id="panel-prova" role="tabpanel"></section>`;
+    <div id="panel-prova"></div>`;
 
   /* ---------- timer ---------- */
   let remaining = DURATA, timerId = null;
@@ -159,9 +152,10 @@ page(async () => {
       renderTimer();
     }
     reveal(panel);
+    renderMathIn(panel);
     updateTotal();
     $("#seed-info").textContent = `Codice prova ${seed}: con “Copia link” la ritrovi o la condividi.`;
-    setParams({ prova: seed, tipo: tipo === "misto" ? "" : tipo });
+    setParams({ prova: seed, tipo });
   }
 
   function updateTotal() {
@@ -186,16 +180,18 @@ page(async () => {
       : tot >= S.soglia ? `<span class="badge ok">Superato</span> soglia ${S.soglia}/30` : `<span class="badge soft">Non superato</span> servono almeno ${S.soglia} punti`;
   }
 
-  const tabs = segmented($(".segmented"), (v) => { tipo = v; resetTimer(); render(); });
-  tabs.select(tipo);
-  app.addEventListener("input", (e) => { if (e.target.matches(".q-score input")) updateTotal(); });
-  $("#gen-btn").onclick = () => {
+  root.addEventListener("input", (e) => { if (e.target.matches(".q-score input")) updateTotal(); });
+  $("#gen-btn", root).onclick = () => {
     if (timerId && !confirm("Il timer è in corso: vuoi davvero generare una nuova prova?")) return;
-    seed = newSeed(); resetTimer(); render(); window.scrollTo({ top: 0 });
+    seed = newSeed(); resetTimer(); render(); root.scrollIntoView({ block: "start" });
   };
-  $("#copy-btn").onclick = async () => {
+  $("#copy-btn", root).onclick = async () => {
     try { await navigator.clipboard.writeText(location.href); $("#seed-info").textContent = `Link copiato (codice prova ${seed}).`; }
     catch (e) { $("#seed-info").textContent = `Copia non riuscita: copia l'indirizzo dalla barra del browser (codice prova ${seed}).`; }
   };
   render();
-});
+  return {
+    setTipo(t) { tipo = t; resetTimer(); render(); },
+    stop() { resetTimer(); },
+  };
+}

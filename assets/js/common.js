@@ -9,10 +9,10 @@
 
 const NAV = [
   { href: "programma.html", label: "Programma" },
+  { href: "teoria.html", label: "Teoria" },
   { href: "formulario.html", label: "Formulario" },
   { href: "esercizi.html", label: "Esercizi" },
-  { href: "simulazione.html", label: "Simula esame" },
-  { href: "esame.html", label: "Esame" },
+  { href: "esame.html", label: "Esame e quiz" },
   { href: "laboratorio.html", label: "Laboratorio" },
 ];
 
@@ -212,7 +212,7 @@ function showConsentBanner(force = false) {
 
 /* ---------- CTA fissa su mobile: continua dalla prossima lezione ---------- */
 function renderStickyCta(lezioni) {
-  if (/simulazione\.html$/.test(location.pathname)) return; // la pagina ha già la sua barra dei punteggi
+  if (/esame\.html$/.test(location.pathname)) return; // la pagina ha già i suoi pulsanti di correzione
   const next = lezioni.lezioni.find((l) => !Store.get("lesson", String(l.n)));
   $("#sticky-cta")?.remove();
   const bar = document.createElement("div");
@@ -220,8 +220,8 @@ function renderStickyCta(lezioni) {
   bar.className = "sticky-cta";
   bar.innerHTML = next
     ? `<a class="btn primary" href="programma.html#lez-${next.n}">Continua: Lezione&nbsp;${next.n}</a>
-       <a class="btn" href="simulazione.html">${icon("timer")} Simula</a>`
-    : `<a class="btn primary" href="simulazione.html">Simula l'esame</a>`;
+       <a class="btn" href="esame.html#allenati">${icon("timer")} Quiz</a>`
+    : `<a class="btn primary" href="esame.html#allenati">Mettiti alla prova</a>`;
   document.body.append(bar);
   document.body.classList.add("has-sticky-cta");
 }

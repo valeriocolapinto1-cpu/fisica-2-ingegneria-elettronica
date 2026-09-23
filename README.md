@@ -10,11 +10,12 @@ Sito personale e **non ufficiale**. Programma, calendario e struttura d'esame so
 |---|---|---|
 | Home | `index.html` | Panoramica del corso, progressi per blocco, prossima lezione, backup dei progressi |
 | Programma | `programma.html` | Due viste nella stessa pagina: **Lezioni** (le 60 lezioni in ordine, spuntabili, con filtri) e **Programma ufficiale** (7 blocchi con ore, capitoli, argomenti e testo integrale). `calendario.html` rimanda qui |
-| Simula esame | `simulazione.html` | Generatore di prove con i testi veri: scritto misto (4 esercizi di argomenti diversi + 2 domande di teoria), appello vero completo (timer 2h30) o orale (3 domande, opzionale una di laboratorio), autocorrezione con totale, soglia e voto stimato. Il codice prova nell'URL la rende riproducibile |
+| (Simula esame) | `simulazione.html` → `esame.html` | Generatore di prove con i testi veri: scritto misto (4 esercizi di argomenti diversi + 2 domande di teoria), appello vero completo (timer 2h30) o orale (3 domande, opzionale una di laboratorio), autocorrezione con totale, soglia e voto stimato. Il codice prova nell'URL la rende riproducibile |
+| Teoria | `teoria.html` | La teoria spiegata per ogni blocco (file HTML in `data/teoria/`, con formule KaTeX tra `$…$`) |
 | Formulario | `formulario.html` | Formule per blocco con KaTeX (Maxwell in forma integrale e locale, ecc.), filtro, stampa |
 | Esercizi | `esercizi.html` | Gli esercizi reali dei 48 appelli d'esame (con soluzioni) e le domande di teoria, filtrabili per argomento e anno |
 | Laboratorio | `laboratorio.html` | Le 5 esperienze con obiettivo, strumentazione e checklist della relazione |
-| Esame | `esame.html` | Struttura di scritto e orale, soglia, voto finale, risultati di apprendimento, materiali (`risorse.html` rimanda qui) |
+| Esame e quiz | `esame.html` | Regole della prova, **quiz a correzione automatica** (`data/quiz.json`), simulazioni di scritto misto, appello vero e orale, consigli, obiettivi e materiali (`risorse.html` e `simulazione.html` rimandano qui) |
 | Cerca | `cerca.html` | Ricerca in programma, lezioni, formule, esercizi e laboratorio |
 | Privacy | `privacy.html` | Informativa: nessun cookie, dati solo nel browser, statistiche facoltative |
 | Note legali | `note-legali.html` | Termini d'uso, sito non ufficiale, licenze |
@@ -29,6 +30,8 @@ Sito personale e **non ufficiale**. Programma, calendario e struttura d'esame so
 │   ├── programma.json              7 blocchi → sezioni → argomenti
 │   ├── lezioni.json                60 lezioni (tipo, capitoli, sezioni collegate)
 │   ├── formule.json                formulario in LaTeX
+│   ├── quiz.json                   banca delle domande del quiz (scelta multipla e numeriche)
+│   ├── teoria/b1.html … b7.html    spiegazioni teoriche per capitolo
 │   ├── appelli.json                48 appelli: esercizi, domande di teoria, soluzioni (estratti dai PDF)
 │   ├── laboratorio.json            esperienze di laboratorio
 │   ├── esame.json                  struttura d'esame, risultati di apprendimento, criteri

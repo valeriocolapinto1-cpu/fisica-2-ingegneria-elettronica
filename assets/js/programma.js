@@ -52,6 +52,7 @@ page(async () => {
           <div class="small muted" style="margin-top:10px">Lezioni del blocco</div>
           <div class="chips">${lezPerBlocco[b.id].map((l) => `<a class="chip" href="#lez-${l.n}" data-goto="lezioni" data-l="${l.n}" title="${esc(l.titolo)}">L${l.n}</a>`).join("")}</div>` : ""}
         <div class="chips" style="margin-top:10px">
+          <a class="chip" href="teoria.html?b=${b.id}">${icon("book")} Teoria</a>
           <a class="chip" href="formulario.html#${b.id}">${icon("sigma")} Formule</a>
           <a class="chip" href="esercizi.html?blocco=${b.id}">${icon("pencil")} Esercizi</a>
         </div>

@@ -34,9 +34,23 @@ page(async () => {
   for (const x of d.laboratorio.esperienze) {
     idx.push({ tipo: "Laboratorio", titolo: x.titolo, meta: `Lezioni ${x.lezioni.join(", ")}`, testo: x.obiettivo, extra: x.strumentazione.join(" "), url: `laboratorio.html#${x.id}` });
   }
+  // titoli dei paragrafi della teoria
+  const parser = new DOMParser();
+  await Promise.all(d.programma.blocchi.map(async (b) => {
+    try {
+      const html = await (await fetch(`data/teoria/${b.id}.html`)).text();
+      const doc = parser.parseFromString(html, "text/html");
+      doc.querySelectorAll("h3[id]").forEach((h) => {
+        let body = "", el = h.nextElementSibling;
+        while (el && el.tagName !== "H3") { body += " " + el.textContent; el = el.nextElementSibling; }
+        body = body.replace(/\$[^$]*\$/g, " ").replace(/\s+/g, " ").trim();
+        idx.push({ tipo: "Teoria", titolo: h.textContent, meta: `Blocco ${b.numero} — ${b.titolo}`, testo: body.slice(0, 170) + "…", extra: body, url: `teoria.html?b=${b.id}#${h.id}` });
+      });
+    } catch (e) { /* capitolo non disponibile */ }
+  }));
   idx.forEach((r) => (r._n = norm([r.titolo, r.meta, r.testo, r.extra].filter(Boolean).join(" "))));
 
-  const ORDER = ["Programma", "Lezioni", "Formule", "Esercizi", "Laboratorio"];
+  const ORDER = ["Teoria", "Programma", "Lezioni", "Formule", "Esercizi", "Laboratorio"];
 
   app.innerHTML = `
     ${pageHead("Cerca", "Trova un argomento", "Cerca tra lezioni, programma, formule, esercizi d'esame e laboratorio.")}
