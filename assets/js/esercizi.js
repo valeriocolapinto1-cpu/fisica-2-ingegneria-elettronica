@@ -1,4 +1,5 @@
-/* Esercizi: i testi reali degli appelli d'esame, con soluzioni, divisi per argomento */
+/* Esercizi: indice degli appelli d'esame per argomento. Testi, figure e soluzioni NON sono riprodotti:
+   restano nella cartella ufficiale del corso (link in data/appelli.json → fonte). */
 page(async () => {
   const { programma, appelli } = await loadData("programma", "appelli");
   const { blocchi } = indexProgramma(programma);
@@ -10,20 +11,19 @@ page(async () => {
   const anni = [...new Set(appelli.appelli.map((a) => a.data.slice(0, 4)))];
 
   const exCard = (e) => `
-    <article class="card exercise" id="es-${e.id}" data-id="${e.id}" data-block="${e.blocco}" data-year="${e.appello.data.slice(0, 4)}" data-search="${esc(norm(`${e.testo} ${e.appello.titolo} ${blocchi[e.blocco].titolo}`))}">
+    <article class="card exercise" id="es-${e.id}" data-id="${e.id}" data-block="${e.blocco}" data-year="${e.appello.data.slice(0, 4)}" data-search="${esc(norm(`${e.appello.titolo} esercizio ${e.n} ${blocchi[e.blocco].titolo}`))}">
       <div class="q-head">
         <span class="chip bchip" style="--bc:${blockColor(e.blocco)};margin:0">${esc(blocchi[e.blocco].titolo)}</span>
         <span class="small muted">${esc(e.appello.titolo)} · esercizio ${e.n}</span>
       </div>
-      <div class="ex-figure">${e.img ? examImg(e.img, e.testo) : `<p>${esc(e.testo)}</p>`}</div>
+      <p class="small">Argomento (stimato): <strong>${esc(blocchi[e.blocco].titolo)}</strong>. Il testo è nel PDF dell'appello, nella <a href="${esc(appelli.fonte)}" target="_blank" rel="noopener">cartella ufficiale del corso${EXT}</a>.</p>
       <div class="ex-foot">
         ${checkbox("exam", e.id, "Risolto")}
-        ${e.soluzione ? `<details class="official sol"><summary>Mostra la soluzione</summary>${examImg(e.soluzione, `Soluzione dell'esercizio ${e.n} dell'appello del ${e.appello.titolo}`)}</details>` : ""}
       </div>
     </article>`;
 
   app.innerHTML = `
-    ${pageHead("Esercizi", "Esercizi d'esame", `${ex.length} esercizi e ${th.length} domande di teoria dai ${appelli.appelli.length} appelli pubblicati dai docenti, con le soluzioni. Filtra per argomento e segna quelli che hai risolto.`)}
+    ${pageHead("Esercizi", "Esercizi d'esame", `Indice di ${ex.length} esercizi e ${th.length} domande di teoria dei ${appelli.appelli.length} appelli pubblicati dai docenti, ordinati per argomento. I testi si aprono dalla cartella ufficiale del corso: qui li trovi per argomento e segni quelli che hai risolto.`)}
     <div class="segmented" role="tablist" aria-label="Tipo">
       <button type="button" role="tab" id="tab-es" data-value="esercizi" aria-controls="panel-es" aria-selected="true">Esercizi</button>
       <button type="button" role="tab" id="tab-th" data-value="teoria" aria-controls="panel-th" aria-selected="false">Domande di teoria</button>
@@ -31,7 +31,7 @@ page(async () => {
 
     <section id="panel-es" role="tabpanel" aria-labelledby="tab-es">
       <div class="toolbar no-print">
-        <input type="search" id="q" name="q" placeholder="Cerca (es. condensatore, solenoide, onda)…" aria-label="Cerca negli esercizi" autocomplete="off">
+        <input type="search" id="q" name="q" placeholder="Cerca (es. 2024, solenoide, onde)…" aria-label="Cerca negli esercizi" autocomplete="off">
         <select id="f-blocco" name="blocco" aria-label="Argomento">
           <option value="">Tutti gli argomenti</option>
           ${BLOCCHI_ES.map((b) => `<option value="${b}">${esc(blocchi[b].titolo)}</option>`).join("")}
@@ -55,7 +55,7 @@ page(async () => {
         const qs = th.filter((q) => q.blocco === b);
         if (!qs.length) return "";
         return `<div class="section-title"><h2 style="display:flex;align-items:center;gap:10px"><span class="dot" style="--bc:${blockColor(b)};width:10px;height:10px"></span>${esc(blocchi[b].titolo)}</h2><span class="small muted">${qs.length} domande</span></div>
-          <div class="card"><ul class="th-list">${qs.map((q) => `<li>${esc(q.testo)} <span class="small muted">· ${esc(q.appello.titolo)}</span></li>`).join("")}</ul></div>`;
+          <div class="card"><ul class="th-list">${qs.map((q) => `<li>Domanda di teoria ${q.n} <span class="small muted">· ${esc(q.appello.titolo)}</span></li>`).join("")}</ul></div>`;
       }).join("")}
     </section>
     <p class="small muted" style="margin-top:20px">Fonte: <a href="${esc(appelli.fonte)}" target="_blank" rel="noopener">cartella degli appelli del corso${EXT}</a>. L'argomento di ogni esercizio è assegnato automaticamente e può essere impreciso.</p>`;

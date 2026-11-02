@@ -13,16 +13,6 @@
     "esercitazioniLaboratorio": 48
   },
   "ssd": "FIS/01",
-  "docenti": [
-    {
-      "nome": "[docente]",
-      "ruolo": "Coordinatore / verbalizzante"
-    },
-    {
-      "nome": "[docente]",
-      "ruolo": "Docente"
-    }
-  ],
   "prerequisiti": [
     "Analisi Matematica 1 (propedeutica)",
     "Consigliata: Fisica I",
@@ -36,9 +26,10 @@
     "url": "https://valeriocolapinto1-cpu.github.io/fisica-2-ingegneria-elettronica/"
   },
   "contatti": {
-    "nota": "Contatto pubblico mostrato nel piè di pagina e nelle pagine Privacy/Note legali. 'email' è facoltativa: lasciala null per non pubblicarla.",
+    "nota": "Contatto pubblico mostrato nel piè di pagina e nelle pagine Privacy/Note legali.",
     "github": "https://github.com/valeriocolapinto1-cpu",
-    "email": null
+    "email": "valeriocolapinto1@gmail.com",
+    "segnalazioni": "https://github.com/valeriocolapinto1-cpu/fisica-2-ingegneria-elettronica/issues"
   },
   "analytics": {
     "nota": "Statistiche facoltative con GoatCounter (senza cookie). Crea un account gratuito su goatcounter.com e inserisci qui il codice del sito (es. 'fisica2'). Con null le statistiche sono disattivate e il banner è solo informativo.",

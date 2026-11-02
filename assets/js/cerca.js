@@ -25,10 +25,10 @@ page(async () => {
   }
   for (const ap of d.appelli.appelli) {
     for (const e of ap.esercizi) {
-      idx.push({ tipo: "Esercizi", titolo: `${ap.titolo} · esercizio ${e.n}`, meta: blocchi[e.blocco].titolo, testo: e.testo.length > 220 ? e.testo.slice(0, 220) + "…" : e.testo, extra: e.testo, url: `esercizi.html#es-${ap.id}-${e.n}` });
+      idx.push({ tipo: "Esercizi", titolo: `${ap.titolo} · esercizio ${e.n}`, meta: blocchi[e.blocco].titolo, url: `esercizi.html#es-${ap.id}-${e.n}` });
     }
     for (const q of ap.teoria) {
-      idx.push({ tipo: "Esercizi", titolo: `Domanda di teoria · ${ap.titolo}`, meta: blocchi[q.blocco].titolo, testo: q.testo, url: `esercizi.html?vista=teoria` });
+      idx.push({ tipo: "Esercizi", titolo: `Domanda di teoria · ${ap.titolo}`, meta: blocchi[q.blocco].titolo, url: `esercizi.html?vista=teoria` });
     }
   }
   for (const x of d.laboratorio.esperienze) {

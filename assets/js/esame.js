@@ -9,7 +9,7 @@ page(async () => {
   let tipo = TIPI.includes(params.get("tipo")) ? params.get("tipo") : "quiz";
 
   app.innerHTML = `
-    ${pageHead(`a.a. ${esc(corso.annoAccademico)}`, "Esame", "Come funziona la prova e un posto dove allenarsi: quiz corretti in automatico, scritti con i testi veri degli appelli e simulazioni dell'orale.")}
+    ${pageHead(`a.a. ${esc(corso.annoAccademico)}`, "Esame", "Come funziona la prova e un posto dove allenarsi: quiz corretti in automatico, simulazioni di scritto (con rimando ai PDF ufficiali degli appelli) e di orale.")}
 
     <div class="exam-facts">
       <section class="card accent">
@@ -81,7 +81,7 @@ page(async () => {
         <dl class="kv">
           <dt>Testo</dt><dd>${esc(risorse.testo.autori)}, <em>${esc(risorse.testo.titolo)}</em>, ${esc(risorse.testo.editore)}</dd>
           <dt>Dispense</dt><dd>Teoria della misura, distribuite dai docenti durante il corso</dd>
-          <dt>Appelli</dt><dd><a href="esercizi.html">Tutti gli esercizi con soluzioni</a> · <a href="${esc(corso.link.dropboxEsami)}" target="_blank" rel="noopener">PDF originali${EXT}</a></dd>
+          <dt>Appelli</dt><dd><a href="esercizi.html">Indice degli esercizi per argomento</a> · <a href="${esc(corso.link.dropboxEsami)}" target="_blank" rel="noopener">PDF originali${EXT}</a></dd>
           <dt>Corso</dt><dd><a href="${esc(corso.link.paginaRoma)}" target="_blank" rel="noopener">Pagina ufficiale Roma${EXT}</a></dd>
         </dl>
       </div>

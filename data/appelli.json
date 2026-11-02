@@ -1,5 +1,5 @@
 {
- "nota": "Testi degli appelli d'esame pubblicati dai docenti nella cartella Dropbox del corso. Le immagini in assets/appelli sono ritagli dei PDF originali (esercizi e soluzioni). Il campo 'testo' è estratto automaticamente e serve per la ricerca e come testo alternativo. Il campo 'blocco' è una stima automatica dell'argomento: correggilo se serve.",
+ "nota": "Indice degli appelli: per ogni prova sono indicati solo data, numero d'ordine e argomento stimato di ogni esercizio e domanda di teoria. I testi, le figure e le soluzioni degli appelli non sono riprodotti qui: sono dei docenti del corso e si consultano nella cartella ufficiale indicata in 'fonte'. L'argomento è assegnato automaticamente e può essere impreciso.",
  "fonte": "https://www.dropbox.com/sh/h50zlus8itk54c1/AADDnxDcyfbcg6YWt48s0fIQa?dl=0",
  "appelli": [
   {

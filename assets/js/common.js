@@ -134,10 +134,12 @@ function renderChrome() {
   footer.className = "site-footer";
   footer.innerHTML = `
     <p>Fisica Generale II · Ingegneria Elettronica · Università di Roma · a.a.&nbsp;2026/2027</p>
-    <p>Sito di studio non ufficiale, gratuito e aperto a tutti gli studenti del corso. Per programma ed esami fanno fede le comunicazioni dei docenti.</p>
+    <p>Sito di studio non ufficiale, gratuito e aperto a tutti gli studenti del corso. Non è affiliato all'università né ai docenti: per programma ed esami fanno fede le comunicazioni dei docenti.</p>
+    <p>© 2026 Valerio Colapinto · contenuti originali per uso personale di studio · codice con licenza MIT.</p>
     <nav class="footer-links" aria-label="Link legali">
       <a href="privacy.html">Privacy</a>
       <a href="note-legali.html">Note legali</a>
+      <a href="https://github.com/valeriocolapinto1-cpu/fisica-2-ingegneria-elettronica/blob/main/COMPLIANCE.md" target="_blank" rel="noopener">Provenienza dei contenuti</a>
       <span id="footer-contact"></span>
       <button type="button" class="linklike" id="cookie-prefs">Preferenze cookie</button>
     </nav>`;

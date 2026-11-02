@@ -13,7 +13,7 @@ page(async () => {
 
   const features = [
     ["teoria.html", "book", "var(--b1)", "Teoria", "Ogni capitolo spiegato, con le dimostrazioni da sapere."],
-    ["esercizi.html", "pencil", "var(--b2)", "Esercizi d'esame", `${nEx} esercizi di ${appelli.appelli.length} appelli, con soluzioni.`],
+    ["esercizi.html", "pencil", "var(--b2)", "Esercizi d'esame", `Indice per argomento di ${nEx} esercizi di ${appelli.appelli.length} appelli.`],
     ["esame.html#allenati", "timer", "var(--b5)", "Quiz e simulazioni", `${quiz.domande.length} domande corrette in automatico, scritti e orali simulati.`],
     ["formulario.html", "sigma", "var(--b3)", "Formulario", `${nFormule} formule, da Coulomb a Maxwell.`],
   ];
@@ -23,7 +23,7 @@ page(async () => {
       <div class="hero-glow" aria-hidden="true"></div>
       <p class="kicker"><span class="pill">a.a.&nbsp;${esc(corso.annoAccademico)}</span> ${esc(corso.corsoDiLaurea)} · Roma</p>
       <h1>Fisica Generale&nbsp;II,<br><span class="grad">tutto in un posto.</span></h1>
-      <p class="lead">Teoria spiegata, formule, esercizi d'esame con soluzioni, quiz corretti in automatico e simulazioni. Gratis, senza registrazione.</p>
+      <p class="lead">Teoria spiegata, formule, indice degli esercizi d'esame per argomento, quiz corretti in automatico e simulazioni. Gratis, senza registrazione.</p>
       <div class="hero-actions">
         ${next
           ? `<a class="btn primary lg" href="programma.html#lez-${next.n}">${lezDone ? "Continua" : "Inizia"} dalla lezione&nbsp;${next.n} <span aria-hidden="true">→</span></a>`

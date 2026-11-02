@@ -1,4 +1,6 @@
-/* Prove d'esame simulate con i testi reali degli appelli (usato nella pagina Esame).
+/* Simulazione di prove d'esame (usato nella pagina Esame). Non riproduce testi d'esame:
+   indica quale esercizio di quale appello svolgere (il PDF è nella cartella ufficiale del corso)
+   e propone domande di teoria ricavate dal programma ufficiale.
    - Scritto misto: 4 esercizi di argomenti diversi + 2 domande di teoria, presi da appelli diversi
    - Appello vero: un appello passato completo, estratto a caso
    - Orale: 3 domande di teoria di argomenti diversi (una può essere sul laboratorio)
@@ -30,6 +32,10 @@ function createProve(root, { programma, appelli, esame, laboratorio }, initial) 
   const allEx = appelli.appelli.flatMap((a) => a.esercizi.map((e) => ({ ...e, appello: a })));
   const allTh = appelli.appelli.flatMap((a) => a.teoria.map((q) => ({ ...q, appello: a })));
   const exBy = groupBy(allEx), thBy = groupBy(allTh);
+  /* le domande di teoria sono tratte dal programma ufficiale (argomenti del blocco), non dai testi degli appelli */
+  const temiBy = {};
+  for (const b of programma.blocchi) temiBy[b.id] = b.sezioni.flatMap((s) => s.argomenti.map((a) => a.testo));
+  const teoriaDa = (r, q) => ({ ...q, appello: null, tema: pick(r, temiBy[q.blocco] || [blocchi[q.blocco].titolo]) });
   const completi = appelli.appelli.filter((a) => a.esercizi.length === 4 && a.teoria.length >= 2);
 
   function genMisto(seed) {
@@ -37,16 +43,16 @@ function createProve(root, { programma, appelli, esame, laboratorio }, initial) 
     const bs = shuffle(r, Object.keys(exBy)).slice(0, 4).sort();
     const ex = bs.map((b) => pick(r, exBy[b]));
     const tb = shuffle(r, Object.keys(thBy)).slice(0, 2);
-    return { ex, th: tb.map((b) => pick(r, thBy[b])) };
+    return { ex, th: tb.map((b) => teoriaDa(r, pick(r, thBy[b]))) };
   }
   function genVero(seed) {
     const a = pick(rng(seed * 3 + 1), completi);
-    return { appello: a, ex: a.esercizi.map((e) => ({ ...e, appello: a })), th: a.teoria.slice(0, 2).map((q) => ({ ...q, appello: a })) };
+    return { appello: a, ex: a.esercizi.map((e) => ({ ...e, appello: a })), th: a.teoria.slice(0, 2).map((q) => teoriaDa(rng(seed + q.n), { ...q, appello: a })) };
   }
   function genOrale(seed, conLab) {
     const r = rng(seed * 7 + 3);
     const n = conLab ? 2 : 3;
-    const qs = shuffle(r, Object.keys(thBy)).slice(0, n).map((b) => pick(r, thBy[b]));
+    const qs = shuffle(r, Object.keys(thBy)).slice(0, n).map((b) => teoriaDa(r, pick(r, thBy[b])));
     if (conLab) qs.push({ lab: pick(r, laboratorio.esperienze), blocco: "b7" });
     return qs;
   }
@@ -84,7 +90,7 @@ function createProve(root, { programma, appelli, esame, laboratorio }, initial) 
     if (timerId) { clearInterval(timerId); timerId = null; renderTimer(); return; }
     timerId = setInterval(() => {
       remaining = Math.max(0, remaining - 1);
-      if (remaining === 0) { clearInterval(timerId); timerId = null; $("#timer-msg").textContent = "Tempo scaduto: apri le soluzioni e correggi."; }
+      if (remaining === 0) { clearInterval(timerId); timerId = null; $("#timer-msg").textContent = "Tempo scaduto: confronta con le soluzioni ufficiali e correggi."; }
       renderTimer();
     }, 1000);
     renderTimer();
@@ -101,8 +107,8 @@ function createProve(root, { programma, appelli, esame, laboratorio }, initial) 
       <div class="q-num" aria-hidden="true">${i + 1}</div>
       <div style="min-width:0">
         <div class="q-head">${chip(e.blocco)}<span class="small muted">${esc(e.appello.titolo)}</span></div>
-        <div class="ex-figure">${e.img ? examImg(e.img, e.testo) : `<p>${esc(e.testo)}</p>`}</div>
-        ${e.soluzione ? `<details class="official sol"><summary>Mostra la soluzione</summary>${examImg(e.soluzione, `Soluzione dell'esercizio ${i + 1}`)}</details>` : ""}
+        <p class="q-title">Svolgi l'<strong>esercizio ${e.n}</strong> dell'appello del ${esc(e.appello.titolo)} (argomento: ${esc(blocchi[e.blocco].titolo)}).
+          Il testo e la soluzione ufficiale sono nel PDF dell'appello, nella <a href="${esc(appelli.fonte)}" target="_blank" rel="noopener">cartella del corso${EXT}</a>.</p>
         ${scoreInput(`ex${i}`, PT_EX, `Voto esercizio ${i + 1}`)}
       </div>
     </article>`;
@@ -112,7 +118,7 @@ function createProve(root, { programma, appelli, esame, laboratorio }, initial) 
       <div>
         ${q.lab
           ? `<div class="q-head">${chip("b7")}</div><p class="q-title">Esperienza di laboratorio: «${esc(q.lab.titolo)}». Descrivi scopo, apparato, misure e analisi dei dati.</p>`
-          : `<div class="q-head">${chip(q.blocco)}<span class="small muted">${esc(q.appello.titolo)}</span></div><p class="q-title">${esc(q.testo)}</p>`}
+          : `<div class="q-head">${chip(q.blocco)}${q.appello ? `<span class="small muted">${esc(q.appello.titolo)}</span>` : ""}</div><p class="q-title">Esponi e, dove serve, dimostra: <strong>${esc(q.tema)}</strong>.</p>`}
         ${scoreInput(`${pre || "or"}${i}`, max, `Voto domanda ${pre}${i + 1}`)}
       </div>
     </article>`;
