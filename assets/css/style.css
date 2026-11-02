@@ -181,7 +181,8 @@ main:focus { outline: none; }
 }
 .site-footer p { margin: 0 0 8px; }
 .footer-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 18px; }
-.footer-links a { color: var(--text-muted); }
+.footer-links a { color: var(--text-muted); display: inline-block; padding: 6px 4px; min-height: 24px; }
+.footer-links .linklike { padding: 6px 4px; min-height: 24px; }
 .footer-links a:hover { color: var(--text); }
 
 /* ---------- form controls ---------- */
