@@ -617,3 +617,10 @@ details.more > summary .chev { transition: transform .25s var(--ease); color: va
 details.more[open] > summary .chev { transform: rotate(90deg); }
 details.more > .more-body { padding: 0 18px 16px; }
 details.more.card { padding: 0; }
+
+/* soluzioni passo per passo degli esercizi generati */
+.sol-steps { margin: 10px 0 8px; padding-left: 1.3em; line-height: 1.6; }
+.sol-steps li { margin: 4px 0; }
+.sol-res { margin: 8px 0 0; padding: 8px 12px; border-radius: 8px; background: var(--surface-2, rgba(127,127,127,.1)); }
+.gen-card { margin-bottom: 18px; }
+.gen-ex { margin-top: 12px; }

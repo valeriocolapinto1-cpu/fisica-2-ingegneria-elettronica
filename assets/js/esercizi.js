@@ -24,6 +24,18 @@ page(async () => {
 
   app.innerHTML = `
     ${pageHead("Esercizi", "Esercizi d'esame", `Indice di ${ex.length} esercizi e ${th.length} domande di teoria dei ${appelli.appelli.length} appelli pubblicati dai docenti, ordinati per argomento. I testi si aprono dalla cartella ufficiale del corso: qui li trovi per argomento e segni quelli che hai risolto.`)}
+    <section class="card gen-card" id="gen" aria-labelledby="gen-h">
+      <h2 id="gen-h" style="margin-top:0">Genera un esercizio nuovo</h2>
+      <p class="small muted">Esercizi originali sulla tipologia degli appelli passati: numeri casuali, soluzione calcolata passo per passo. Nessun testo d'esame è riprodotto.</p>
+      <div class="toolbar no-print">
+        <select id="g-blocco" name="gblocco" aria-label="Argomento dell'esercizio">
+          <option value="">Qualsiasi argomento</option>
+          ${BLOCCHI_ES.map((b) => `<option value="${b}">${esc(blocchi[b].titolo)}</option>`).join("")}
+        </select>
+        <button class="btn primary" type="button" id="g-new">Nuovo esercizio</button>
+      </div>
+      <div id="g-out" aria-live="polite"></div>
+    </section>
     <div class="segmented" role="tablist" aria-label="Tipo">
       <button type="button" role="tab" id="tab-es" data-value="esercizi" aria-controls="panel-es" aria-selected="true">Esercizi</button>
       <button type="button" role="tab" id="tab-th" data-value="teoria" aria-controls="panel-th" aria-selected="false">Domande di teoria</button>
@@ -59,6 +71,24 @@ page(async () => {
       }).join("")}
     </section>
     <p class="small muted" style="margin-top:20px">Fonte: <a href="${esc(appelli.fonte)}" target="_blank" rel="noopener">cartella degli appelli del corso${EXT}</a>. L'argomento di ogni esercizio è assegnato automaticamente e può essere impreciso.</p>`;
+
+  /* ---------- generatore di esercizi ---------- */
+  function mostraGenerato() {
+    const b = $("#g-blocco").value || null, seed = Math.floor(Math.random() * 900000) + 100000;
+    const e = Generatore.generaEsercizio(seed, b);
+    $("#g-out").innerHTML = `
+      <article class="exercise gen-ex">
+        <div class="q-head"><span class="chip bchip" style="--bc:${blockColor(e.blocco)};margin:0">${esc(blocchi[e.blocco].titolo)}</span><span class="small muted">${esc(e.tema)} · codice ${seed}</span></div>
+        <p class="q-title">${esc(e.testo)}</p>
+        <details class="official sol"><summary>Mostra la soluzione</summary>
+          <ol class="sol-steps">${e.passi.map((x) => `<li>${esc(x)}</li>`).join("")}</ol>
+          <p class="sol-res"><strong>Risultati.</strong> ${e.risultati.map((x) => `$${esc(x)}$`).join(" &nbsp;·&nbsp; ")}</p>
+        </details>
+      </article>`;
+    renderMathIn($("#g-out"));
+  }
+  $("#g-new").addEventListener("click", mostraGenerato);
+  mostraGenerato();
 
   function updateProgress() {
     const done = Store.count("exam", ex.map((e) => e.id));

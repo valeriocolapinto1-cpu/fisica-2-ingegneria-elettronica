@@ -9,7 +9,7 @@ page(async () => {
   let tipo = TIPI.includes(params.get("tipo")) ? params.get("tipo") : "quiz";
 
   app.innerHTML = `
-    ${pageHead(`a.a. ${esc(corso.annoAccademico)}`, "Esame", "Come funziona la prova e un posto dove allenarsi: quiz corretti in automatico, simulazioni di scritto (con rimando ai PDF ufficiali degli appelli) e di orale.")}
+    ${pageHead(`a.a. ${esc(corso.annoAccademico)}`, "Esame", "Come funziona la prova e un posto dove allenarsi: quiz corretti in automatico, prove di scritto generate sulla tipologia degli appelli passati (con soluzioni) e simulazioni di orale.")}
 
     <div class="exam-facts">
       <section class="card accent">
@@ -34,7 +34,7 @@ page(async () => {
     <div class="segmented" role="tablist" aria-label="Tipo di prova">
       <button type="button" role="tab" id="tab-quiz" data-value="quiz" aria-controls="panel-quiz" aria-selected="true">Quiz</button>
       <button type="button" role="tab" id="tab-misto" data-value="misto" aria-controls="panel-prove" aria-selected="false">Scritto misto</button>
-      <button type="button" role="tab" id="tab-vero" data-value="vero" aria-controls="panel-prove" aria-selected="false">Appello vero</button>
+      <button type="button" role="tab" id="tab-vero" data-value="vero" aria-controls="panel-prove" aria-selected="false">Appello tipo</button>
       <button type="button" role="tab" id="tab-orale" data-value="orale" aria-controls="panel-prove" aria-selected="false">Orale</button>
     </div>
     <section id="panel-quiz" role="tabpanel" aria-labelledby="tab-quiz" style="margin-top:14px"></section>

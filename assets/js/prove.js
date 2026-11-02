@@ -1,8 +1,9 @@
-/* Simulazione di prove d'esame (usato nella pagina Esame). Non riproduce testi d'esame:
-   indica quale esercizio di quale appello svolgere (il PDF è nella cartella ufficiale del corso)
-   e propone domande di teoria ricavate dal programma ufficiale.
-   - Scritto misto: 4 esercizi di argomenti diversi + 2 domande di teoria, presi da appelli diversi
-   - Appello vero: un appello passato completo, estratto a caso
+/* Simulazione di prove d'esame (usato nella pagina Esame).
+   Le prove sono GENERATE da assets/js/generatore.js: esercizi con numeri casuali e soluzione calcolata, ricalcati sulla
+   tipologia degli appelli passati (stesso numero di esercizi per blocco, stesse grandezze richieste), e domande di teoria
+   nello stile dei quesiti d'esame. Nessun testo d'esame di terzi è riprodotto.
+   - Scritto misto: 4 esercizi di blocchi diversi + 2 domande di teoria
+   - Appello tipo: stessa struttura (blocchi) di un appello passato scelto a caso
    - Orale: 3 domande di teoria di argomenti diversi (una può essere sul laboratorio)
    Il codice prova nell'URL rende la prova riproducibile e condivisibile. */
 function createProve(root, { programma, appelli, esame, laboratorio }, initial) {
@@ -12,48 +13,13 @@ function createProve(root, { programma, appelli, esame, laboratorio }, initial) 
   const DURATA = 150 * 60; // 2 ore e 30 minuti
   const PT_EX = S.composizione[0].puntiCadauno, PT_TH = S.composizione[1].puntiCadauno, PT_OR = O.composizione[0].puntiCadauno;
 
-  /* ---------- generatore pseudo-casuale riproducibile ---------- */
-  function rng(seed) {
-    let a = seed >>> 0;
-    return () => {
-      a = (a + 0x6d2b79f5) >>> 0;
-      let t = a;
-      t = Math.imul(t ^ (t >>> 15), t | 1);
-      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-    };
-  }
-  const pick = (r, arr) => arr[Math.floor(r() * arr.length)];
-  const shuffle = (r, arr) => { const a = [...arr]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  /* ---------- generazione (assets/js/generatore.js) ---------- */
   const newSeed = () => Math.floor(Math.random() * 900000) + 100000;
-  const groupBy = (arr) => arr.reduce((m, x) => ((m[x.blocco] = m[x.blocco] || []).push(x), m), {});
-
-  /* ---------- materiale ---------- */
-  const allEx = appelli.appelli.flatMap((a) => a.esercizi.map((e) => ({ ...e, appello: a })));
-  const allTh = appelli.appelli.flatMap((a) => a.teoria.map((q) => ({ ...q, appello: a })));
-  const exBy = groupBy(allEx), thBy = groupBy(allTh);
-  /* le domande di teoria sono tratte dal programma ufficiale (argomenti del blocco), non dai testi degli appelli */
-  const temiBy = {};
-  for (const b of programma.blocchi) temiBy[b.id] = b.sezioni.flatMap((s) => s.argomenti.map((a) => a.testo));
-  const teoriaDa = (r, q) => ({ ...q, appello: null, tema: pick(r, temiBy[q.blocco] || [blocchi[q.blocco].titolo]) });
-  const completi = appelli.appelli.filter((a) => a.esercizi.length === 4 && a.teoria.length >= 2);
-
-  function genMisto(seed) {
-    const r = rng(seed);
-    const bs = shuffle(r, Object.keys(exBy)).slice(0, 4).sort();
-    const ex = bs.map((b) => pick(r, exBy[b]));
-    const tb = shuffle(r, Object.keys(thBy)).slice(0, 2);
-    return { ex, th: tb.map((b) => teoriaDa(r, pick(r, thBy[b]))) };
-  }
-  function genVero(seed) {
-    const a = pick(rng(seed * 3 + 1), completi);
-    return { appello: a, ex: a.esercizi.map((e) => ({ ...e, appello: a })), th: a.teoria.slice(0, 2).map((q) => teoriaDa(rng(seed + q.n), { ...q, appello: a })) };
-  }
+  const pick = (r, arr) => arr[Math.floor(r() * arr.length)];
   function genOrale(seed, conLab) {
-    const r = rng(seed * 7 + 3);
-    const n = conLab ? 2 : 3;
-    const qs = shuffle(r, Object.keys(thBy)).slice(0, n).map((b) => teoriaDa(r, pick(r, thBy[b])));
-    if (conLab) qs.push({ lab: pick(r, laboratorio.esperienze), blocco: "b7" });
+    const p = Generatore.generaProva(seed, appelli, "orale");
+    const qs = p.teoria.slice(0, conLab ? 2 : 3);
+    if (conLab) qs.push({ lab: pick(Generatore.rng(seed * 7 + 3), laboratorio.esperienze), blocco: "b7" });
     return qs;
   }
 
@@ -90,7 +56,7 @@ function createProve(root, { programma, appelli, esame, laboratorio }, initial) 
     if (timerId) { clearInterval(timerId); timerId = null; renderTimer(); return; }
     timerId = setInterval(() => {
       remaining = Math.max(0, remaining - 1);
-      if (remaining === 0) { clearInterval(timerId); timerId = null; $("#timer-msg").textContent = "Tempo scaduto: confronta con le soluzioni ufficiali e correggi."; }
+      if (remaining === 0) { clearInterval(timerId); timerId = null; $("#timer-msg").textContent = "Tempo scaduto: apri le soluzioni e correggi."; }
       renderTimer();
     }, 1000);
     renderTimer();
@@ -102,13 +68,16 @@ function createProve(root, { programma, appelli, esame, laboratorio }, initial) 
   const scoreInput = (name, max, label) =>
     `<label class="q-score">Voto <input type="number" name="${name}" min="0" max="${max}" step="0.5" inputmode="decimal" autocomplete="off" placeholder="0–${max}…" aria-label="${label}"> / ${max}</label>`;
   const chip = (b) => `<span class="chip bchip" style="--bc:${blockColor(b)};margin:0">${esc(blocchi[b].titolo)}</span>`;
+  const soluzioneHtml = (e) => `<details class="official sol"><summary>Mostra la soluzione</summary>
+      <ol class="sol-steps">${e.passi.map((x) => `<li>${esc(x)}</li>`).join("")}</ol>
+      <p class="sol-res"><strong>Risultati.</strong> ${e.risultati.map((x) => `$${esc(x)}$`).join(" &nbsp;·&nbsp; ")}</p></details>`;
   const exCard = (e, i) => `
     <article class="card q-card" style="--bc:${blockColor(e.blocco)}">
       <div class="q-num" aria-hidden="true">${i + 1}</div>
       <div style="min-width:0">
-        <div class="q-head">${chip(e.blocco)}<span class="small muted">${esc(e.appello.titolo)}</span></div>
-        <p class="q-title">Svolgi l'<strong>esercizio ${e.n}</strong> dell'appello del ${esc(e.appello.titolo)} (argomento: ${esc(blocchi[e.blocco].titolo)}).
-          Il testo e la soluzione ufficiale sono nel PDF dell'appello, nella <a href="${esc(appelli.fonte)}" target="_blank" rel="noopener">cartella del corso${EXT}</a>.</p>
+        <div class="q-head">${chip(e.blocco)}<span class="small muted">${esc(e.tema)}</span></div>
+        <p class="q-title">${esc(e.testo)}</p>
+        ${soluzioneHtml(e)}
         ${scoreInput(`ex${i}`, PT_EX, `Voto esercizio ${i + 1}`)}
       </div>
     </article>`;
@@ -118,7 +87,8 @@ function createProve(root, { programma, appelli, esame, laboratorio }, initial) 
       <div>
         ${q.lab
           ? `<div class="q-head">${chip("b7")}</div><p class="q-title">Esperienza di laboratorio: «${esc(q.lab.titolo)}». Descrivi scopo, apparato, misure e analisi dei dati.</p>`
-          : `<div class="q-head">${chip(q.blocco)}${q.appello ? `<span class="small muted">${esc(q.appello.titolo)}</span>` : ""}</div><p class="q-title">Esponi e, dove serve, dimostra: <strong>${esc(q.tema)}</strong>.</p>`}
+          : `<div class="q-head">${chip(q.blocco)}</div><p class="q-title">${esc(q.testo)}</p>
+             <details class="official sol"><summary>Traccia di risposta</summary><ul>${q.traccia.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></details>`}
         ${scoreInput(`${pre || "or"}${i}`, max, `Voto domanda ${pre}${i + 1}`)}
       </div>
     </article>`;
@@ -139,9 +109,10 @@ function createProve(root, { programma, appelli, esame, laboratorio }, initial) 
         ${totalCard("Totale orale")}`;
       $("#lab-toggle").onchange = (e) => { conLab = e.target.checked; setParams({ lab: conLab ? "" : "0" }); render(); };
     } else {
-      const p = tipo === "vero" ? genVero(seed) : genMisto(seed);
+      const p = Generatore.generaProva(seed, appelli, tipo === "vero" ? "appello" : "misto");
+      p.th = p.teoria; p.ex = p.esercizi;
       panel.innerHTML = `
-        ${p.appello ? `<p class="small muted" style="margin-top:0">Appello del <strong>${esc(p.appello.titolo)}</strong>.</p>` : ""}
+        ${p.modello ? `<p class="small muted" style="margin-top:0">Struttura ricalcata sull'appello del <strong>${esc(p.modello.titolo)}</strong> (stessi argomenti per esercizio e teoria; testi e numeri sono nuovi).</p>` : ""}
         <div class="card timer-card no-print">
           <div><div class="small muted">Tempo</div><div class="timer" id="timer" role="timer" aria-live="off">${fmtTime(remaining)}</div></div>
           <div class="sim-actions"><button class="btn blue" type="button" id="timer-btn">Avvia</button><button class="btn" type="button" id="timer-reset">Azzera</button></div>

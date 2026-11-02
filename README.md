@@ -10,10 +10,10 @@ Sito personale e **non ufficiale**. Programma, calendario e struttura d'esame so
 |---|---|---|
 | Home | `index.html` | Panoramica del corso, progressi per blocco, prossima lezione, backup dei progressi |
 | Programma | `programma.html` | Due viste nella stessa pagina: **Lezioni** (le 60 lezioni in ordine, spuntabili, con filtri) e **Programma ufficiale** (7 blocchi con ore, capitoli, argomenti e testo integrale). `calendario.html` rimanda qui |
-| (Simula esame) | `simulazione.html` → `esame.html` | Generatore di prove (rimanda ai PDF ufficiali degli appelli; teoria dal programma): scritto misto (4 esercizi di argomenti diversi + 2 domande di teoria), appello vero completo (timer 2h30) o orale (3 domande, opzionale una di laboratorio), autocorrezione con totale, soglia e voto stimato. Il codice prova nell'URL la rende riproducibile |
+| (Simula esame) | `simulazione.html` → `esame.html` | Prove **generate** sulla tipologia degli appelli passati, con soluzioni: scritto misto (4 esercizi di argomenti diversi + 2 domande di teoria), appello vero completo (timer 2h30) o orale (3 domande, opzionale una di laboratorio), autocorrezione con totale, soglia e voto stimato. Il codice prova nell'URL la rende riproducibile |
 | Teoria | `teoria.html` | La teoria spiegata per ogni blocco (file HTML in `data/teoria/`, con formule KaTeX tra `$…$`) |
 | Formulario | `formulario.html` | Formule per blocco con KaTeX (Maxwell in forma integrale e locale, ecc.), filtro, stampa |
-| Esercizi | `esercizi.html` | Indice dei 48 appelli d'esame (esercizi e domande di teoria per argomento e anno) con rimando ai PDF ufficiali; niente testi né soluzioni |
+| Esercizi | `esercizi.html` | **Generatore di esercizi** originali (35 template, numeri casuali, soluzione passo per passo) e indice dei 48 appelli passati per argomento con rimando ai PDF ufficiali |
 | Laboratorio | `laboratorio.html` | Le 5 esperienze con obiettivo, strumentazione e checklist della relazione |
 | Esame e quiz | `esame.html` | Regole della prova, **quiz a correzione automatica** (`data/quiz.json`), simulazioni di scritto misto, appello vero e orale, consigli, obiettivi e materiali (`risorse.html` e `simulazione.html` rimandano qui) |
 | Cerca | `cerca.html` | Ricerca in programma, lezioni, formule, esercizi e laboratorio |
@@ -77,10 +77,21 @@ python3 -m http.server 8000
 
 - **Non cambiare gli `id`** esistenti (`b1a-3`, `es12`, `lab2:c4`, …): sono le chiavi con cui vengono salvati i progressi. Puoi aggiungere voci nuove con `id` nuovi.
 - **LaTeX nei JSON**: ogni backslash va raddoppiato (`"\\vec E"`). Nei campi di testo (`note`, `testo`, `soluzione`) la matematica inline va tra `$...$` e quella in display tra `$$...$$`.
-- **Appelli**: `appelli.json` contiene solo data, numero d'ordine e argomento stimato (`blocco` = b1–b5) di ogni esercizio e domanda; **non aggiungere testi, figure o soluzioni dei PDF dei docenti**. Il campo `blocco` è stimato: correggilo se è sbagliato.
+- **Appelli**: `appelli.json` contiene solo data, numero d'ordine e argomento stimato (serve anche a ricalcare la struttura delle prove generate) (`blocco` = b1–b5) di ogni esercizio e domanda; **non aggiungere testi, figure o soluzioni dei PDF dei docenti**. Il campo `blocco` è stimato: correggilo se è sbagliato.
 - **Risultati di apprendimento**: in `esame.json` i 6 livelli sono segnaposto (`"placeholder": true`). Copia il testo ufficiale dalla pagina Roma e imposta `placeholder` a `false`.
 - **Laboratorio**: obiettivi e strumentazione sono indicativi (`"indicativo": true`). Correggili secondo le schede del docente e imposta `indicativo` a `false`.
 - **Collegamenti lezione → programma**: il campo `sezioni` di `lezioni.json` è indicativo, ricavato dal titolo della lezione. Puoi correggerlo liberamente.
+
+## Generatore di esercizi e prove
+
+`assets/js/generatore.js` produce esercizi e prove **originali** che ricalcano la *tipologia* degli appelli passati:
+
+- **35 template** (b1–b5: elettrostatica, circuiti, magnetostatica, induzione, onde): ciascuno ha parametri casuali, testo, soluzione passo per passo e risultati numerici. Sono scritti per questo sito e **non riproducono testi o dati dei docenti**.
+- **Struttura delle prove**: `Generatore.generaProva(seme, appelli, tipo)` usa `data/appelli.json` (solo date, numero d'ordine e blocco di ogni esercizio/domanda) per ricalcare la distribuzione degli argomenti di un appello passato.
+- **Riproducibile**: lo stesso seme dà la stessa prova (il codice prova è nell'URL).
+- **Verificato**: `node --test` confronta ogni soluzione con un calcolo indipendente (integrazione numerica, simulazione di ODE, Biot–Savart discretizzato, algebra dei nodi) su 40 semi per template.
+- **Da riga di comando**: `node tools/genera-prova.mjs --tipo misto --soluzioni` (vedi `--aiuto`).
+- **Aggiungere un template**: `def('b3-nuovo', 'b3', 'Titolo', (r) => { ... return { testo, passi, risultati, parametri, valori }; })` in `generatore.js`, più una verifica numerica in `tests/generatore.test.mjs`. Scrivi sempre il testo con parole tue: non copiare enunciati dei PDF.
 
 ## SEO, contatti, statistiche
 

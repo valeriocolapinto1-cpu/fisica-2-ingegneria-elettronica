@@ -7,13 +7,14 @@ e come chiedere di rimuovere qualcosa. Non è un disclaimer: elenca i criteri ap
 
 ## In breve
 
-Spiegazioni, quiz, formulario, schede di laboratorio e simulazioni sono scritti per questo sito. I **testi, le figure e le soluzioni degli appelli d'esame non sono riprodotti**: la pagina Esercizi è un indice (data, numero e argomento stimato) che rimanda alla cartella ufficiale del corso.
+Spiegazioni, quiz, formulario, schede di laboratorio e simulazioni sono scritti per questo sito. I **testi, le figure e le soluzioni degli appelli d'esame non sono riprodotti**: gli esercizi e le prove sono **generati da template propri** che ricalcano la tipologia degli appelli passati (argomenti, grandezze richieste, livello) con testi, numeri e soluzioni originali; la pagina Esercizi contiene inoltre un indice degli appelli (data, numero e argomento stimato) con rimando alla cartella ufficiale del corso.
 
 ## Provenienza
 
 - **Spiegazioni, quiz, formulario, schede**: scritti per questo sito dall'autore, con formule standard in unità SI.
 - **Programma**: elenco degli argomenti del programma ufficiale del corso (informazione pubblica), con rimando alla pagina ufficiale.
-- **Appelli**: solo metadati propri (data, numero d'ordine, argomento stimato automaticamente) e il link alla cartella ufficiale del corso.
+- **Esercizi e prove generati** (`assets/js/generatore.js`): 35 template scritti per il sito, con parametri casuali e soluzione calcolata e verificata numericamente (`tests/generatore.test.mjs`). Un controllo di sovrapposizione con i vecchi testi d'esame ha portato a riformulare ogni enunciato finché nessuna sequenza di più di 6 parole consecutive coincide con quelle degli appelli (restano solo locuzioni tecniche standard come «le armature di un condensatore piano»).
+- **Appelli**: solo metadati propri (data, numero d'ordine, argomento stimato automaticamente), usati per ricalcare la distribuzione degli argomenti, e il link alla cartella ufficiale del corso.
 - **Bibliografia**: autore, titolo ed editore del testo consigliato (citazione lecita); nessun contenuto del libro è riprodotto.
 
 ## Che cosa il sito NON contiene
@@ -35,7 +36,7 @@ da alcun dipartimento o da alcun docente. Nomi di istituzioni e corsi compaiono 
 |---|---|
 | 378 immagini WebP (`assets/appelli/`) ritagliate dai PDF degli appelli, con esercizi e soluzioni | Riproduzione fedele di testi d'esame altrui: non coperta da alcuna eccezione e non necessaria al sito |
 | Campi `testo`, `img` e `soluzione` di 191 esercizi e `testo` di 90 domande di teoria in `data/appelli.json` | Testo estratto dai PDF dei docenti |
-| Simulatore d'esame con i «testi veri» | Ora indica quale esercizio di quale appello svolgere (testo sul PDF ufficiale) e genera domande di teoria dal programma |
+| Simulatore d'esame con i «testi veri» | Sostituito da un generatore di prove originali sulla stessa tipologia (struttura degli argomenti ricalcata sugli appelli passati), con soluzioni calcolate |
 | Nomi dei docenti in `data/corso.json` | Il sito non si rivolge ai docenti né li rappresenta; per i nomi vale la pagina ufficiale del corso |
 | Nome dell'università da titoli, descrizioni e anteprime social | Il regolamento sul marchio disciplina l'uso della denominazione; resta l'uso nominativo nel corpo del sito per dire di cosa tratta e cosa non è |
 
