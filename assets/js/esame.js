@@ -66,7 +66,7 @@ page(async () => {
         <div>
           <h3>Risultati di apprendimento</h3>
           <ul class="topic-list" id="ra-list">
-            ${ra.livelli.map((l) => `<li>${checkbox("outcome", l.id, `<strong>Livello ${l.livello}.</strong> ${l.placeholder && l.testo.startsWith("[") ? `<span class="soft-text">descrizione nella <a href="${esc(corso.link.paginaRoma)}" target="_blank" rel="noopener">scheda ufficiale${EXT}</a></span>` : esc(l.testo)}`)}</li>`).join("")}
+            ${ra.livelli.map((l) => `<li>${checkbox("outcome", l.id, `<strong>Livello ${l.livello}.</strong> ${l.placeholder && l.testo.startsWith("[") ? `<span class="soft-text">descrizione nella <a href="${esc(corso.link.paginaCorso)}" target="_blank" rel="noopener">scheda ufficiale${EXT}</a></span>` : esc(l.testo)}`)}</li>`).join("")}
           </ul>
         </div>
         <div>
@@ -82,7 +82,7 @@ page(async () => {
           <dt>Testo</dt><dd>${esc(risorse.testo.autori)}, <em>${esc(risorse.testo.titolo)}</em>, ${esc(risorse.testo.editore)}</dd>
           <dt>Dispense</dt><dd>Teoria della misura, distribuite dai docenti durante il corso</dd>
           <dt>Appelli</dt><dd><a href="esercizi.html">Indice degli esercizi per argomento</a> · <a href="${esc(corso.link.dropboxEsami)}" target="_blank" rel="noopener">PDF originali${EXT}</a></dd>
-          <dt>Corso</dt><dd><a href="${esc(corso.link.paginaRoma)}" target="_blank" rel="noopener">Pagina ufficiale Roma${EXT}</a></dd>
+          <dt>Corso</dt><dd><a href="${esc(corso.link.paginaCorso)}" target="_blank" rel="noopener">Pagina ufficiale del corso${EXT}</a></dd>
         </dl>
       </div>
     </details>`;

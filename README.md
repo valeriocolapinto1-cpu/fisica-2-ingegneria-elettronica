@@ -1,6 +1,6 @@
 # Fisica Generale II — sito di studio
 
-Sito statico per preparare l'esame di **Fisica Generale II** (Ingegneria Elettronica, Università di Roma, a.a. 2026/2027 — docenti [docente] ed [docente], 12 CFU).
+Sito statico per preparare l'esame di **Fisica Generale II** (Ingegneria Elettronica, a.a. 2026/2027, 12 CFU).
 
 Sito personale e **non ufficiale**. Programma, calendario e struttura d'esame sono quelli ufficiali del corso. I dettagli non disponibili sono segnati come segnaposto da completare.
 
@@ -78,7 +78,7 @@ python3 -m http.server 8000
 - **Non cambiare gli `id`** esistenti (`b1a-3`, `es12`, `lab2:c4`, …): sono le chiavi con cui vengono salvati i progressi. Puoi aggiungere voci nuove con `id` nuovi.
 - **LaTeX nei JSON**: ogni backslash va raddoppiato (`"\\vec E"`). Nei campi di testo (`note`, `testo`, `soluzione`) la matematica inline va tra `$...$` e quella in display tra `$$...$$`.
 - **Appelli**: `appelli.json` contiene solo data, numero d'ordine e argomento stimato (serve anche a ricalcare la struttura delle prove generate) (`blocco` = b1–b5) di ogni esercizio e domanda; **non aggiungere testi, figure o soluzioni dei PDF dei docenti**. Il campo `blocco` è stimato: correggilo se è sbagliato.
-- **Risultati di apprendimento**: in `esame.json` i 6 livelli sono segnaposto (`"placeholder": true`). Copia il testo ufficiale dalla pagina Roma e imposta `placeholder` a `false`.
+- **Risultati di apprendimento**: in `esame.json` i 6 livelli sono segnaposto (`"placeholder": true`). Copia il testo ufficiale dalla pagina ufficiale del corso e imposta `placeholder` a `false`.
 - **Laboratorio**: obiettivi e strumentazione sono indicativi (`"indicativo": true`). Correggili secondo le schede del docente e imposta `indicativo` a `false`.
 - **Collegamenti lezione → programma**: il campo `sezioni` di `lezioni.json` è indicativo, ricavato dal titolo della lezione. Puoi correggerlo liberamente.
 
@@ -124,4 +124,5 @@ Non riproduce testi, figure o soluzioni di terzi: criteri e provenienza in [`COM
 
 - Codice: licenza MIT ([`LICENSE`](LICENSE)). Contenuti originali: uso personale di studio ([`LICENSE-CONTENT.md`](LICENSE-CONTENT.md)).
 - Componenti di terzi: [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md).
-- Segnalazioni e rimozioni: [issue](https://github.com/valeriocolapinto1-cpu/fisica-2-ingegneria-elettronica/issues/new?template=rimozione-contenuti.md) o [valeriocolapinto1@gmail.com](mailto:valeriocolapinto1@gmail.com). Il materiale contestato viene rimosso subito.
+- Contatti: [valeriocolapinto1@gmail.com](mailto:valeriocolapinto1@gmail.com) · [LinkedIn](https://www.linkedin.com/in/valerio-colapinto) · [GitHub](https://github.com/valeriocolapinto1-cpu).
+- Segnalazioni e rimozioni: [issue](https://github.com/valeriocolapinto1-cpu/fisica-2-ingegneria-elettronica/issues/new?template=rimozione-contenuti.md) o email. Il materiale contestato viene rimosso subito.

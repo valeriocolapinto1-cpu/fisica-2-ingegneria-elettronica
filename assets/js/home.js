@@ -21,7 +21,7 @@ page(async () => {
   app.innerHTML = `
     <section class="hero">
       <div class="hero-glow" aria-hidden="true"></div>
-      <p class="kicker"><span class="pill">a.a.&nbsp;${esc(corso.annoAccademico)}</span> ${esc(corso.corsoDiLaurea)} · Roma</p>
+      <p class="kicker"><span class="pill">a.a.&nbsp;${esc(corso.annoAccademico)}</span> ${esc(corso.corsoDiLaurea)}</p>
       <h1>Fisica Generale&nbsp;II,<br><span class="grad">tutto in un posto.</span></h1>
       <p class="lead">Teoria spiegata, formule, indice degli esercizi d'esame per argomento, quiz corretti in automatico e simulazioni. Gratis, senza registrazione.</p>
       <div class="hero-actions">

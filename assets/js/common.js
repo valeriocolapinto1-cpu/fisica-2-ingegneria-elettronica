@@ -114,7 +114,7 @@ function renderChrome() {
   header.className = "site-header";
   header.innerHTML = `
     <div class="header-inner">
-      <a class="brand" href="index.html" translate="no"><svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#0062d1"/><path d="M14 18h36L32 50z" fill="none" stroke="#fff" stroke-width="5" stroke-linejoin="round"/></svg>Fisica II <span>Roma</span></a>
+      <a class="brand" href="index.html" translate="no"><svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#0062d1"/><path d="M14 18h36L32 50z" fill="none" stroke="#fff" stroke-width="5" stroke-linejoin="round"/></svg>Fisica II <span>Ing. Elettronica</span></a>
       <nav class="nav" id="nav" aria-label="Navigazione principale">
         ${NAV.map((n) => `<a href="${n.href}"${n.href === page ? ' aria-current="page"' : ""}>${n.label}</a>`).join("")}
       </nav>
@@ -133,7 +133,7 @@ function renderChrome() {
   const footer = document.createElement("footer");
   footer.className = "site-footer";
   footer.innerHTML = `
-    <p>Fisica Generale II · Ingegneria Elettronica · Università di Roma · a.a.&nbsp;2026/2027</p>
+    <p>Fisica Generale II · Ingegneria Elettronica · Roma · a.a.&nbsp;2026/2027</p>
     <p>Sito di studio non ufficiale, gratuito e aperto a tutti gli studenti del corso. Non è affiliato all'università né ai docenti: per programma ed esami fanno fede le comunicazioni dei docenti.</p>
     <p>© 2026 Valerio Colapinto · contenuti originali per uso personale di studio · codice con licenza MIT.</p>
     <nav class="footer-links" aria-label="Link legali">
@@ -161,6 +161,7 @@ function renderContacts(corso) {
   const c = corso.contatti || {};
   const parts = [];
   if (c.email) parts.push(`<a href="mailto:${esc(c.email)}">${esc(c.email)}</a>`);
+  if (c.linkedin) parts.push(`<a href="${esc(c.linkedin)}" target="_blank" rel="noopener">LinkedIn${EXT}</a>`);
   if (c.github) parts.push(`<a href="${esc(c.github)}" target="_blank" rel="noopener">GitHub${EXT}</a>`);
   const htmlC = parts.join(" · ");
   if (htmlC) {

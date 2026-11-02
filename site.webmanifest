@@ -1,7 +1,7 @@
 {
   "name": "Fisica Generale II — Studio",
   "short_name": "Fisica II",
-  "description": "Sito di studio per Fisica Generale II, Ingegneria Elettronica, Roma.",
+  "description": "Sito di studio per Fisica Generale II, Ingegneria Elettronica.",
   "lang": "it",
   "start_url": "./index.html",
   "scope": "./",
