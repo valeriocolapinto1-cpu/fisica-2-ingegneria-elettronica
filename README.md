@@ -1,5 +1,12 @@
 # Fisica Generale II — sito di studio
 
+> **Il sito si è spostato.** Fisica Generale II ora fa parte di **Study Hub**, il sito di studio unico di Ingegneria Elettronica:
+> <https://valeriocolapinto1-cpu.github.io/study-hub/it/anno-2/fisica-2/>
+>
+> Le pagine pubblicate da questo repository rimandano alle pagine corrispondenti del nuovo sito (il service worker,
+> se c'era, si disattiva da solo). Il codice resta qui come archivio; la storia è conservata anche in
+> [`study-hub/legacy/`](https://github.com/valeriocolapinto1-cpu/study-hub/tree/main/legacy).
+
 Sito statico per preparare l'esame di **Fisica Generale II** (Ingegneria Elettronica, a.a. 2026/2027, 12 CFU).
 
 Sito personale e **non ufficiale**. Programma, calendario e struttura d'esame sono quelli ufficiali del corso. I dettagli non disponibili sono segnati come segnaposto da completare.
